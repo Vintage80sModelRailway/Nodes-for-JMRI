@@ -19,15 +19,14 @@ https://github.com/Vintage80sModelRailway/Nodes-for-JMRI/blob/main/nodes%20map.j
 
 <h2>1 - MQTT_Client_PS_Node_2</h2>
 
-
 <h2>2 - MQTT_Client_PS_C1_minimised</h2>
 
-3 - MQTT_Client_PS_Node_3_minimised
+<h2>3 - MQTT_Client_PS_Node_3_minimised</h2>
 
-4 - MQTT_Client_ESP_inclineTop
+<h2>4 - MQTT_Client_ESP_inclineTop</h2>
 
-5 - g3_RelayShiftOutDriver_c2
+<h2>5 - g3_RelayShiftOutDriver_c2</h2>
 
-6 - g3_RelayShiftOutDriver_c3
+<h2>6 - g3_RelayShiftOutDriver_c3</h2>
 
-7 - g3_RelayShiftOutDriver_c1
+<h2>7 - g3_RelayShiftOutDriver_c1</h2>

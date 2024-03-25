@@ -70,6 +70,8 @@ But they were very twitchy when connected to an ESP, so they've now been moved e
 
 https://youtu.be/rpdpft-YQa8?si=AEQFfvEUaDozkKNs
 
+Also controls 8 relays on a relay board for electrofrog polarity on the upper incline crossovers. It does this by subscribing to the MQTT topic for the turnouts, and switching the relays on / off based on the state of the turnout.
+
 <h2>5 - g3_RelayShiftOutDriver_c2</h2>
 Intel Galileo Gen2
 

@@ -17,6 +17,11 @@ Some of the sensor classes include debounce code which handles 'flapping' and pr
 All servo turnout control uses a 'slow' method where the servo gradually moves the servo to the required position.
 https://www.youtube.com/watch?v=ViDmebzVHoY
 
+The ESPs use wifi which requires an SSID and password. These are stored in separate files called arduino_secrets.h. These are excluded from the repo for security reasons.
+To replace them, create a new project file called arduino_secrets.h and fill it with the following lines
+#define SECRET_SSID "yourSSID"
+#define SECRET_PASS "yourPassword"
+
 DISCLAIMER - these sketches are written very much for my requirements and will very probably not directly transfer to another layout. They're here more as a reference, how I'm doing things, and hopefully will provide something useful to someone.
 
 Map of where nodes are situated on the layout

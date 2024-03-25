@@ -13,4 +13,14 @@ Some of the sensor classes include debounce code which handles 'flapping' and pr
 
 DISCLAIMER - these sketches are written very much for my requirements and will very probably not directly transfer to another layout. They're here more as a reference, how I'm doing things, and hopefully will provide something useful to someone.
 
-MQTT_Client_ESP_InclineTop contains a modified version of the ESP32-Servo library that enables me to statically assign PWM channels to specific pins (therefore servos). This eliminates the inconsistency of PWM configuration values, and servos moving to different places on different days depending on what PWM channel they happen to had dynamically assigned to them.
+Map of where nodes are situated on the layout
+
+https://github.com/Vintage80sModelRailway/Nodes-for-JMRI/blob/main/nodes%20map.jpg
+
+1 - MQTT_Client_PS_Node_2
+2 - MQTT_Client_PS_C1_minimised
+3 - MQTT_Client_PS_Node_3_minimised
+4 - MQTT_Client_ESP_inclineTop
+5 - g3_RelayShiftOutDriver_c2
+6 - g3_RelayShiftOutDriver_c3
+7 - g3_RelayShiftOutDriver_c1

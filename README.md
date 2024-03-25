@@ -17,10 +17,17 @@ Map of where nodes are situated on the layout
 
 https://github.com/Vintage80sModelRailway/Nodes-for-JMRI/blob/main/nodes%20map.jpg
 
-1 - MQTT_Client_PS_Node_2
-2 - MQTT_Client_PS_C1_minimised
+<h2>1 - MQTT_Client_PS_Node_2</h2>
+
+
+<h2>2 - MQTT_Client_PS_C1_minimised</h2>
+
 3 - MQTT_Client_PS_Node_3_minimised
+
 4 - MQTT_Client_ESP_inclineTop
+
 5 - g3_RelayShiftOutDriver_c2
+
 6 - g3_RelayShiftOutDriver_c3
+
 7 - g3_RelayShiftOutDriver_c1

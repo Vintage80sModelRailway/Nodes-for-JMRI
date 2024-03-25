@@ -25,6 +25,7 @@ https://github.com/Vintage80sModelRailway/Nodes-for-JMRI/blob/main/nodes%20map.j
 
 <h2>1 - MQTT_Client_PS_Node_2</h2>
 Arduino Mega R3
+
 The first node created for the layout, controlling the four crossovers (8 turnouts) at the top of the map image.
 
 Controls the servos for the layouts and has shift out registers connected that control the LEDs for nearby signals.

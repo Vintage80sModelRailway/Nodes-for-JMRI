@@ -9,7 +9,7 @@
 #include "ShiftRegister.h"
 
 #define NumberOfPWMBoards 1
-#define NumberOfSensors 7
+#define NumberOfSensors 11
 //#define NumberOfShiftInRegisters 0
 #define NumberOfShiftOutRegisters 2
 #define OutputTurnoutThresholdID 2041
@@ -505,15 +505,6 @@ void InitialiseConfig() {
 
 
   //Sensors - Name, Pin, JMRIId, IsInverted = false, Pinmode = INPUT, Lastknownvalue = 0
-  //Sensors[0] = Sensor("MS Incline bottom 1", 3, "2001", true, INPUT_PULLUP);
-  //Sensors[1] = Sensor("MS Incline Bottom 2", 4, "2002", false, INPUT_PULLUP);
-  //Sensors[2] = Sensor("MS Incline Bottom 3", 7, "2003", true, INPUT_PULLUP);
-  //Sensors[3] = Sensor("MS Incline Bottom 4", 10, "2004", false, INPUT_PULLUP);
-  //Sensors[4] = Sensor("MS LD In to Out 1", 8, "2005", false, INPUT_PULLUP);
-  //Sensors[5] = Sensor("MS LD In to Out 2", 9, "2006", false, INPUT_PULLUP);
-  //Sensors[6] = Sensor("MS LD Out to In 1", 6, "2007", false, INPUT_PULLUP);
-  //Sensors[7] = Sensor("MS LD Out to In 2", 5, "2008", false, INPUT_PULLUP);
-
   Sensors[0] = Sensor("IR CW Junction PC End Stopping sensor", 33, "2033", true);
   Sensors[1] = Sensor("CD CW Lower junction Pi End", 34, "2034", true, INPUT_PULLUP);
   Sensors[2] = Sensor("CD CW lower junction PC End", 35, "2035", true, INPUT_PULLUP);
@@ -521,9 +512,10 @@ void InitialiseConfig() {
   Sensors[4] = Sensor("CD Incline lower junction", 37, "2037", true, INPUT_PULLUP);
   Sensors[5] = Sensor("CD spare", 38, "2038", true, INPUT_PULLUP);
   Sensors[6] = Sensor("CD AC Junction PC End", 39, "2039", true, INPUT_PULLUP);
-
-
-
+  Sensors[7] = Sensor("UD-UL Station Platform 2", 26, "2040", true, INPUT_PULLUP);
+  Sensors[8] = Sensor("UD-CW Station CW", 29, "2041", true, INPUT_PULLUP);
+  Sensors[9] = Sensor("UD-AC Station AC", 28, "2042", true, INPUT_PULLUP);
+  Sensors[10] = Sensor("UD-AC Station Platform 1", 27, "2043", true, INPUT_PULLUP);
 
   for (int i = 0; i < NumberOfSensors; i++) {
     Sensors[i].SetPinMode();

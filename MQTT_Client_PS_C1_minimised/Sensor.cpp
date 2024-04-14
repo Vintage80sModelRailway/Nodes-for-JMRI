@@ -101,7 +101,7 @@ bool Sensor::UpdateSensor() {
 
   if (inDebounce) {
     if (correctedVal != debounceValue) {
-      Serial.println("Flapping? debounce " + String(debounceValue) + " new " + String(correctedVal));
+      Serial.println(JMRIId+ " flapping? debounce " + String(debounceValue) + " new " + String(correctedVal));
       inDebounce = false;
     }
   }

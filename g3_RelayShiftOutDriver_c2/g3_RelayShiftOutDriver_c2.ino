@@ -263,14 +263,14 @@ void InitialiseConfig() {
   shiftInRegisters[0].Sensors[6] = Sensor("IIR C2C4IR3", -1, "1055");
   shiftInRegisters[0].Sensors[7] = Sensor("IR C2C3IR3", -1, "1056");
 
-  shiftInRegisters[1].Sensors[0] = Sensor("IR C2AC1IR1", -1, "1041");
-  shiftInRegisters[1].Sensors[1] = Sensor("IR C2AC2IR1", -1, "1042");
-  shiftInRegisters[1].Sensors[2] = Sensor("IR C2AC3IR1", -1, "1043");
-  shiftInRegisters[1].Sensors[3] = Sensor("IR C2AC4IR1", -1, "1044");
-  shiftInRegisters[1].Sensors[4] = Sensor("IR CW Yard 5 Entry", -1, "1046");
+  shiftInRegisters[1].Sensors[0] = Sensor("IR C2AC1IR1", -1, "");//1041
+  shiftInRegisters[1].Sensors[1] = Sensor("IR C2AC2IR1", -1, "");//1042
+  shiftInRegisters[1].Sensors[2] = Sensor("IR C2AC3IR1", -1, "");//1043
+  shiftInRegisters[1].Sensors[3] = Sensor("IR C2AC4IR1", -1, "");//1044
+  shiftInRegisters[1].Sensors[4] = Sensor("IR CW Yard 5 Entry", -1, "");//1046
   shiftInRegisters[1].Sensors[5] = Sensor("IR C2C1IR3b", -1, "1047");
   shiftInRegisters[1].Sensors[6] = Sensor("IR C2C2IR3b", -1, "1048");
-  shiftInRegisters[1].Sensors[7] = Sensor("Empty", -1, "xx1");
+  shiftInRegisters[1].Sensors[7] = Sensor("Empty", -1, "");
 
   //Shift out registers
   //Signals at corner 1 - furthest away so first to be published

@@ -5,10 +5,12 @@
 #include <Adafruit_PWMServoDriver.h>
 #include "PWMBoard.h"
 #include "Turnout.h"
+#include "Sensor.h"
 
 #define NumberOfShiftOutRegisters 2
 #define NumberOfShiftInRegisters 0
 #define NumberOfPWMBoards 1
+#define NumberOfSensors 4
 
 int dataPin = 2;
 int latchPin = 3;
@@ -37,6 +39,7 @@ PubSubClient client(ethClient);
 
 ShiftRegister shiftOutRegisters[NumberOfShiftOutRegisters];
 ShiftRegister shiftInRegisters[NumberOfShiftInRegisters];
+Sensor Sensors[NumberOfSensors];
 
 PWMBoard PWMBoards[NumberOfPWMBoards];
 
@@ -69,9 +72,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
           if (PWMBoards[board].turnouts[pin].inSetup == true) {
             //don't do loads of moving at startup
             if (message == "CLOSED") {
-              PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].closedVal+1;
+              PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].closedVal + 1;
             } else {
-              PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].thrownVal+1;
+              PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].thrownVal + 1;
             }
             PWMBoards[board].turnouts[pin].inSetup = false;
           }
@@ -218,6 +221,10 @@ void loop()
     }
   }
 
+  for (int i = 0; i < NumberOfSensors; i++) {
+    UpdateSensor(i);
+  }
+
   client.loop();
 
   //ProcessShiftIn();
@@ -287,7 +294,7 @@ bool ProcessPointsMoveWithSpeedControl(int board, int pin)
       PWMBoards[board].turnouts[pin].currentState = PWMBoards[board].turnouts[pin].requiredState;
       PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].requiredPWMVal;
       if (PWMBoards[board].turnouts[pin].switchOff == true) {
-        Serial.println("Switching servo "+String(pin)+" board "+String(board)+" off");
+        Serial.println("Switching servo " + String(pin) + " board " + String(board) + " off");
         PWMBoards[board].pwm.setPWM(pin, 0, 0);
       }
     }
@@ -344,6 +351,17 @@ void ProcessShiftIn() {
   digitalWrite(load, LOW);
 }
 
+void UpdateSensor(int i) {
+  bool hasChanged = Sensors[i].UpdateSensor();
+  if (hasChanged) {
+    String publishMessage = Sensors[i].State;
+    String topic = Sensors[i].GetSensorPublishTopic();
+
+    PublishToMQTT(topic, publishMessage);
+
+  }
+}
+
 void InitialiseConfig() {
 
   //4 relay board - furthest away so first to be pushed
@@ -373,18 +391,31 @@ void InitialiseConfig() {
 
   PWMBoards[0].pwm = Adafruit_PWMServoDriver(0x40);
   PWMBoards[0].numberOfTurnouts = 10;
-  PWMBoards[0].turnouts[0] = Turnout("6001", 1300, 2100, 1,5); //station xover access line over hatch
-  PWMBoards[0].turnouts[1] = Turnout("6002", 1870, 1150, 1,5); //station approach xover access line med LH near C2
-  PWMBoards[0].turnouts[2] = Turnout("6003", 1100, 1750, 1,5); //station DS PC side
-  PWMBoards[0].turnouts[3] = Turnout("6004", 1250, 1950, 1,5); //station DS Pi side
-  PWMBoards[0].turnouts[4] = Turnout("6005", 1450, 2250, 1,5); //station approach DS yard side
-  PWMBoards[0].turnouts[5] = Turnout("6006", 2200, 1350, 1,5); //station approach DS station side
-  PWMBoards[0].turnouts[6] = Turnout("6007", 1700, 1100, 1,5); //station approach xover AC
-  PWMBoards[0].turnouts[7] = Turnout("6008", 1200, 1750, 1,5); //station xover AC
-  PWMBoards[0].turnouts[8] = Turnout("6009", 1550, 1000, 1,5,true); //station AC bay
-  PWMBoards[0].turnouts[9] = Turnout("6010", 1300, 2200, 1,5,true); //station AC entrance
-  
+  PWMBoards[0].turnouts[0] = Turnout("6001", 1300, 2100, 1, 5); //station xover access line over hatch
+  PWMBoards[0].turnouts[1] = Turnout("6002", 1870, 1150, 1, 5, true); //station approach xover access line med LH near C2
+  PWMBoards[0].turnouts[2] = Turnout("6003", 1100, 1750, 1, 5, true); //station DS PC side
+  PWMBoards[0].turnouts[3] = Turnout("6004", 1250, 1950, 1, 5); //station DS Pi side
+  PWMBoards[0].turnouts[4] = Turnout("6005", 1450, 2250, 1, 5, true); //station approach DS yard side
+  PWMBoards[0].turnouts[5] = Turnout("6006", 2200, 1350, 1, 5, true); //station approach DS station side
+  PWMBoards[0].turnouts[6] = Turnout("6007", 1700, 1100, 1, 5); //station approach xover AC
+  PWMBoards[0].turnouts[7] = Turnout("6008", 1200, 1750, 1, 5); //station xover AC
+  PWMBoards[0].turnouts[8] = Turnout("6009", 1550, 1000, 1, 5, true); //station AC bay
+  PWMBoards[0].turnouts[9] = Turnout("6010", 1300, 2200, 1, 5, true); //station AC entrance
+
   PWMBoards[0].pwm.begin();
   PWMBoards[0].pwm.setPWMFreq(50);  // This is the maximum PWM frequency
   PWMBoards[0].pwm.setOscillatorFrequency(25000000);
+
+  Sensors[0] = Sensor("CD UD-UL Station Approach Pi End", 9, "6001", true, INPUT_PULLUP);
+  Sensors[1] = Sensor("CD UD-CW Station Approach Pi End", 10, "6002", true, INPUT_PULLUP);
+  Sensors[2] = Sensor("CD UD-AC Station Approach Pi End", 11, "6003", true, INPUT_PULLUP);
+  Sensors[3] = Sensor("CD UD-AC Station bay platform", 12, "6004", true, INPUT_PULLUP);
+
+  for (int i = 0; i < NumberOfSensors; i++) {
+    Sensors[i].SetPinMode();
+    UpdateSensor(i);
+
+    String publishMessage = Sensors[i].State;
+    String topic = Sensors[i].GetSensorPublishTopic();
+  }
 }

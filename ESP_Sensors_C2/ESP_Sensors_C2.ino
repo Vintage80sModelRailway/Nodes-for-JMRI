@@ -1,15 +1,12 @@
 #include <WiFiClientSecure.h>
 #include <MQTT.h>
-#include "LDR.h"
 #include "Output.h"
 #include "arduino_secrets.h"
-
-#define NumberOfLDRs 2
 
 const char* ssid     = SECRET_SSID;
 const char* password = SECRET_PASS;
 const uint16_t port = 1883;
-const char * clientName = "ESPInclineTop";
+const char * clientName = "ESPSensorsC2";
 
 const char * server = "192.168.1.29";
 

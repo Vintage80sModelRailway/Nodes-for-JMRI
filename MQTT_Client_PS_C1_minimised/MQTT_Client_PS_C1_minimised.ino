@@ -8,7 +8,7 @@
 #include "Sensor.h"
 
 #define NumberOfPWMBoards 1
-#define NumberOfSensors 13
+#define NumberOfSensors 23
 
 // Update these with values suitable for your network.
 byte mac[6] = { 0x90, 0xA2, 0xDA, 0x3A, 0xD4, 0x8D };
@@ -341,6 +341,19 @@ void InitialiseConfig() {
   Sensors[10] = Sensor("CD corner 2 unused 1", 23, "1027", false, INPUT_PULLUP);
   Sensors[11] = Sensor("CD Incline station 1", 47, "1028", true, INPUT_PULLUP,2000,0);
   Sensors[12] = Sensor("CD Incline station 2", 46, "1029", true, INPUT_PULLUP,2000,0);
+
+  Sensors[13] = Sensor("IR C2AC3IR1", 2, "1043", true, INPUT_PULLUP,2000,0);
+  Sensors[14] = Sensor("IR C2AC2IR1", 44, "1042", true, INPUT_PULLUP,2000,0);
+  Sensors[15] = Sensor("IR C2AC1IR1", 45, "1041", true, INPUT_PULLUP,2000,0);
+  Sensors[16] = Sensor("IR CW Yard 5 Entry", 43, "1046", true, INPUT_PULLUP,2000,0);
+  Sensors[17] = Sensor("IR C2AC4IR12", 42, "1044", true, INPUT_PULLUP,2000,0);
+
+  Sensors[18] = Sensor("CD UD-UL Yard Pi End", 41, "1030", false, INPUT_PULLUP);
+  Sensors[19] = Sensor("CD UD-CW Yard Pi end", 40, "1031", false, INPUT_PULLUP);
+  Sensors[20] = Sensor("CD Incline Pi End DTC", 39, "1032", false, INPUT_PULLUP);
+  Sensors[21] = Sensor("CD UD-AC Yard Pi end", 38, "1033", false, INPUT_PULLUP);
+  Sensors[22] = Sensor("CD UD-CW Yard", 35, "1034", false, INPUT_PULLUP);
+  
 
 
 

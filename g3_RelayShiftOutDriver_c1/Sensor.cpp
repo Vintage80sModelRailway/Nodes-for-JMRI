@@ -45,47 +45,6 @@ bool Sensor::UpdateSensor() {
 
 }
 
-//bool Sensor::UpdateShiftRegisterSensor(int val) {
-//  bool hasChanged = false;
-//  int correctedVal = -1;
-//  if (_inverted) {
-//
-//    correctedVal = !val;
-//  }  else {
-//    correctedVal = val;
-//  }
-//
-//  if (correctedVal == _lastKnownValue) {
-//    inDebounce = false;
-//    return false;
-//  }
-//
-//  if (inDebounce == false)
-//  {
-//    Serial.println("Setting to in debounce " + JMRIId);
-//    millisAtLastChange = millis();
-//    inDebounce = true;
-//  }
-//  unsigned long millisSinceLastChange = (millis() - millisAtLastChange);
-//
-//  Serial.println("Millis since last change " + String(millisSinceLastChange) + " " + JMRIId);
-//
-//  if (millisSinceLastChange >= debounceMS)
-//  {
-//    Serial.println(JMRIId+" change confirmed "+String(_lastKnownValue)+" to " + String(correctedVal));
-//    if (correctedVal == 0)
-//      State = "INACTIVE";
-//    else
-//      State = "ACTIVE";
-//
-//    _lastKnownValue = correctedVal;
-//    inDebounce = false;
-//    hasChanged = true;
-//  }
-//
-//  return hasChanged;
-//}
-
 bool Sensor::UpdateShiftRegisterSensor(int val) {
   bool hasChanged = false;
   int correctedVal = -1;

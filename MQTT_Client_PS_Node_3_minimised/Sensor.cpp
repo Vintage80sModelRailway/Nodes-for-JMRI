@@ -58,7 +58,7 @@ bool Sensor::UpdateSensor() {
   }
 
   if (!inDebounce) {
-    Serial.println("Into debounce current " + String(_lastKnownValue) + " new " + String(correctedVal));
+    Serial.println("Into debounce for "+_name+" current " + String(_lastKnownValue) + " new " + String(correctedVal));
 
 
     switch (debounceMode) {

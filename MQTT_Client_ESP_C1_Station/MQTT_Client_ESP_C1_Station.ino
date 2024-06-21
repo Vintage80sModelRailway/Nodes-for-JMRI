@@ -1,23 +1,20 @@
 #include <WiFiClientSecure.h>
 #include <MQTT.h>
 #include "LDR.h"
-#include "Output.h"
 #include "arduino_secrets.h"
 
-#define NumberOfLDRs 2
+#define NumberOfLDRs 3
 
 const char* ssid     = SECRET_SSID;
 const char* password = SECRET_PASS;
 const uint16_t port = 1883;
-const char * clientName = "ESPInclineTop";
+const char * clientName = "ESPInclineC1Station";
 
 const char * server = "192.168.1.29";
 
 
 WiFiClient wifiClient;
 MQTTClient client;
-Output relays[6];
-
 bool inSetup = true;
 
 LDR LDRs[NumberOfLDRs];
@@ -36,14 +33,6 @@ void connect() {
   }
 
   Serial.println("\nconnected!");
-  client.subscribe("debug/PWMVal/#");
-
-  client.subscribe("track/turnout/5003");
-  client.subscribe("track/turnout/5004");
-  client.subscribe("track/turnout/5005");
-  client.subscribe("track/turnout/5006");
-  client.subscribe("track/turnout/5007");
-  client.subscribe("track/turnout/5008");
 }
 
 void setup()
@@ -102,46 +91,15 @@ void setup()
     }
   }
 
-
-
-  // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
-  // by Arduino. You need to set the IP address directly.
   client.begin(server, wifiClient);
   client.onMessage(messageReceived);
 
   connect();
-
   inSetup = false;
 }
 
 void messageReceived(String &topic, String &payload) {
   Serial.println("incoming: " + topic + " - " + payload);
-  String strTopic = (String)topic;
-  int pos = strTopic.lastIndexOf("/");
-  bool usingDegrees = false;
-  if (pos >= 0 && strTopic.indexOf("turnout") >= 0) {
-    String justTheID = strTopic.substring(pos + 1);
-    int iID = justTheID.toInt();
-
-    Serial.println("Looking in relays for " + justTheID);
-    int foundRelayIndex = -1;
-    for (int r = 0; r < 6; r++) {
-      if (relays[r].JMRIId == justTheID) {
-        foundRelayIndex = r;
-        break;
-      }
-    }
-
-    if (foundRelayIndex >=0) {
-      Serial.println("Found matching local relay on pin "+String(relays[foundRelayIndex].pin));
-      int rVal = 0;
-      if (payload == "THROWN") rVal = 1;
-      if (relays[foundRelayIndex].isInverted) rVal = !rVal;
-      Serial.println("Set to write "+String(rVal)+" to pin "+String(relays[foundRelayIndex].pin));
-      digitalWrite(relays[foundRelayIndex].pin,rVal);
-    }
-
-  }
 }
 
 void loop()
@@ -153,17 +111,6 @@ void loop()
   for (int i = 0; i < NumberOfLDRs; i++) {
     UpdateLDR(i);    
   }
-}
-
-void PublishToMQTT(String topic, String message)  {
-  char topicBuffer[topic.length() + 1];
-  char messageBuffer[message.length() + 1];
-
-  topic.toCharArray(topicBuffer, topic.length() + 1);
-  message.toCharArray(messageBuffer, message.length() + 1);
-
-  Serial.println("Publish: " + topic + " - " + message);
-  //mqttClient.publish(topicBuffer, (uint8_t*)messageBuffer, message.length(), true);
 }
 
 void UpdateLDR(int i) {
@@ -178,27 +125,11 @@ void UpdateLDR(int i) {
     client.publish(topic, publishMessage, true, 0);
     String debugMessage = String(LDRs[i].analogVal)+" - "+LDRs[i].State;
     client.publish("debug/"+LDRs[i].JMRIId,debugMessage,false,0);
-
   }
 }
 
 void InitialiseConfig() {
-  LDRs[0] = LDR("Incline Top DS PC end", 36, "5020", 1800, 100, 2);
-  LDRs[1] = LDR("Incline Top DS Pi end", 32, "5021", 2200, 100, 2);
-  
-  relays[0] = Output("5006",23,false);
-  relays[1] = Output("5004",22,false);
-  relays[2] = Output("5005",21,true);
-  relays[3] = Output("5003",16,true); //bottom one after swap
-  relays[4] = Output("5007",18,true);
-  relays[5] = Output("5008",5,false);
-  //relays[6] = Output("xx",16,false);
-  //relays[7] = Output("xx",19,true); -- 19 might be dodgy
-
-  for (int i = 0; i < 6; i++) {
-    pinMode(relays[i].pin, OUTPUT);
-    Serial.println("Setup complete "+String(i));
-  }
-
-  
+  LDRs[0] = LDR("LDR Station Approach XO", 34, "6010", 2800, 100, 2);
+  LDRs[1] = LDR("LDR Station AC Entry", 35, "6011", 1800, 100, 2);
+  LDRs[2] = LDR("LDR Station XO", 39, "6012", 1800, 100, 2);  
 }

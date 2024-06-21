@@ -392,7 +392,7 @@ void InitialiseConfig() {
   PWMBoards[0].pwm = Adafruit_PWMServoDriver(0x40);
   PWMBoards[0].numberOfTurnouts = 10;
   PWMBoards[0].turnouts[0] = Turnout("6001", 1300, 2100, 1, 5); //station xover access line over hatch
-  PWMBoards[0].turnouts[1] = Turnout("6002", 1870, 1150, 1, 5, true); //station approach xover access line med LH near C2
+  PWMBoards[0].turnouts[1] = Turnout("6002", 1970, 1150, 1, 5, true); //station approach xover access line med LH near C2
   PWMBoards[0].turnouts[2] = Turnout("6003", 1100, 1750, 1, 5, true); //station DS PC side
   PWMBoards[0].turnouts[3] = Turnout("6004", 1250, 1950, 1, 5); //station DS Pi side
   PWMBoards[0].turnouts[4] = Turnout("6005", 1450, 2250, 1, 5, true); //station approach DS yard side

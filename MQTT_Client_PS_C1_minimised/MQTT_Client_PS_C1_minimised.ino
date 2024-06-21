@@ -6,9 +6,12 @@
 #include "PWMBoard.h"
 #include "Turnout.h"
 #include "Sensor.h"
+#include "RFIDInput.h"
+#include <SoftwareSerial.h>
 
 #define NumberOfPWMBoards 1
 #define NumberOfSensors 23
+#define NumberOfRFIDReaders 2
 
 // Update these with values suitable for your network.
 byte mac[6] = { 0x90, 0xA2, 0xDA, 0x3A, 0xD4, 0x8D };
@@ -19,6 +22,13 @@ PubSubClient client(ethClient);
 
 PWMBoard PWMBoards[NumberOfPWMBoards];
 Sensor Sensors[NumberOfSensors];
+SoftwareSerial ss(11,5);
+
+RFIDInput TagReaders[NumberOfRFIDReaders] =
+{
+  RFIDInput("yardexitac", 10, 4),
+  RFIDInput("yardentrycw", 11, 5)
+};
 
 int numberOfServosMoving = 0;
 int servoSpeedMultipluer = 1;
@@ -34,8 +44,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void setup()
 {
-  Serial.begin(19200);
-
+  Serial.begin(9600);
+  ss.begin(9600);
   client.setServer(server, 1883);
   client.setCallback(callback);
 
@@ -72,6 +82,30 @@ void loop()
       }
     }
   }
+  if (ss.available()) {
+    while (ss.available()) {
+      char c = ss.read();
+      Serial.write(c);
+    }
+    Serial.println("Found in main main");
+  }
+  /*
+  for (int r = 0; r < NumberOfRFIDReaders; r++) {
+    if (TagReaders[r].SoftSerial.available()) {
+      Serial.println("Found in main");
+    }
+    bool newTagFound = TagReaders[r].CheckForTag();
+    if (newTagFound) {
+      Serial.write(TagReaders[r].buffer, 64);
+      Serial.println();
+      Serial.println("New tag");
+      String topic = "track/reporter/" + TagReaders[r].Name;
+      byte topicBuffer[topic.length() + 1];
+      topic.toCharArray(topicBuffer, topic.length() + 1);
+      client.publish(topicBuffer, TagReaders[r].buffer, 64, false);
+    }
+  }
+  */
   client.loop();
 }
 
@@ -94,9 +128,9 @@ void ProcessIncomingMessage(String message, String topic) {
           if (PWMBoards[board].turnouts[pin].inSetup == true) {
             //don't do loads of moving at startup
             if (message == "CLOSED") {
-              PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].closedVal+1;
+              PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].closedVal + 1;
             } else {
-              PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].thrownVal+1;
+              PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].thrownVal + 1;
             }
             PWMBoards[board].turnouts[pin].inSetup = false;
           }
@@ -122,7 +156,6 @@ void ProcessIncomingMessage(String message, String topic) {
       }
     }
   }
-
 }
 
 void PublishToMQTT(String topic, String message)  {
@@ -222,7 +255,7 @@ bool ProcessPointsMoveWithSpeedControl(int board, int pin)
       PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].requiredPWMVal;
       numberOfServosMoving--;
       if (PWMBoards[board].turnouts[pin].switchOff == true) {
-        Serial.println("Switching servo "+String(pin)+" board "+String(board)+" off");
+        Serial.println("Switching servo " + String(pin) + " board " + String(board) + " off");
         PWMBoards[board].pwm.setPWM(pin, 0, 0);
       }
     }
@@ -314,46 +347,33 @@ void InitialiseConfig() {
   PWMBoards[0].pwm.setPWMFreq(50);  // This is the maximum PWM frequency
   PWMBoards[0].pwm.setOscillatorFrequency(25000000);
 
-
-  
   //Sensors - Name, Pin, JMRIId, IsInverted = false, Pinmode = INPUT, Lastknownvalue = 0
-  //Sensors[0] = Sensor("MS Incline Top 1", 12, "1001", true,INPUT_PULLUP);
-  //Sensors[1] = Sensor("MS Incline Top 2", 14, "1002", true,INPUT_PULLUP);
-//  Sensors[0] = Sensor("MS C2 AC Y3", 11, "1005", false, INPUT_PULLUP);
-//  Sensors[1] = Sensor("MS C2 Curved 1", 4, "1009", true, INPUT_PULLUP);
-//  Sensors[2] = Sensor("MS C2 Curved 2", 3, "1010", true, INPUT_PULLUP);
-//  Sensors[3] = Sensor("MS C2 Yard Outer 1", 7, "1011", false, INPUT_PULLUP);
-//  Sensors[4] = Sensor("MS CY4", 6, "1012", true, INPUT_PULLUP);
-//  Sensors[5] = Sensor("MS CY5", 8, "1013", true, INPUT_PULLUP);
-//  Sensors[6] = Sensor("MS CY6", 9, "1014", false, INPUT_PULLUP);
-//  Sensors[7] = Sensor("MS C2 AC Y1", 5, "1015", true, INPUT_PULLUP);
-//  Sensors[8] = Sensor("MS C2 AC Y2", 10, "1016", true, INPUT_PULLUP);
-  Sensors[0] = Sensor("CD Pi end CW", 32, "1017", true, INPUT_PULLUP,2000,0);
-  Sensors[1] = Sensor("CD Pi end AC", 33, "1018", true, INPUT_PULLUP,2000,0);
-  Sensors[2] = Sensor("CD Pi end incline", 28, "1019", true, INPUT_PULLUP,2000,0);
+  Sensors[0] = Sensor("CD Pi end CW", 32, "1017", true, INPUT_PULLUP, 2000, 0);
+  Sensors[1] = Sensor("CD Pi end AC", 33, "1018", true, INPUT_PULLUP, 2000, 0);
+  Sensors[2] = Sensor("CD Pi end incline", 28, "1019", true, INPUT_PULLUP, 2000, 0);
   Sensors[3] = Sensor("IR CW Yard Entry", 29, "1020", true, INPUT, 800, 0);
   Sensors[4] = Sensor("IR CW Yard entry lower", 27, "1021", true, INPUT, 800, 0);
   Sensors[5] = Sensor("IR AC Yard Exit", 26, "1022", true, INPUT, 800, 0);
-  Sensors[6] = Sensor("IR AC Yard Bypass stopping sensor", 36, "1023", true, INPUT, 800,0);
+  Sensors[6] = Sensor("IR AC Yard Bypass stopping sensor", 36, "1023", true, INPUT, 800, 0);
   Sensors[7] = Sensor("CD AC Yard bypass Pi End", 25, "1024", false, INPUT_PULLUP);
   Sensors[8] = Sensor("CD CW Yard bypass Pi end", 24, "1025", false, INPUT_PULLUP);
   Sensors[9] = Sensor("CD Incline Top", 22, "1026", false, INPUT_PULLUP);
   Sensors[10] = Sensor("CD corner 2 unused 1", 23, "1027", false, INPUT_PULLUP);
-  Sensors[11] = Sensor("CD Incline station 1", 47, "1028", true, INPUT_PULLUP,2000,0);
-  Sensors[12] = Sensor("CD Incline station 2", 46, "1029", true, INPUT_PULLUP,2000,0);
+  Sensors[11] = Sensor("CD Incline station 1", 47, "1028", true, INPUT_PULLUP, 2000, 0);
+  Sensors[12] = Sensor("CD Incline station 2", 46, "1029", true, INPUT_PULLUP, 2000, 0);
 
-  Sensors[13] = Sensor("IR C2AC3IR1", 2, "1043", true, INPUT_PULLUP,2000,0);
-  Sensors[14] = Sensor("IR C2AC2IR1", 44, "1042", true, INPUT_PULLUP,2000,0);
-  Sensors[15] = Sensor("IR C2AC1IR1", 45, "1041", true, INPUT_PULLUP,2000,0);
-  Sensors[16] = Sensor("IR CW Yard 5 Entry", 43, "1046", true, INPUT_PULLUP,2000,0);
-  Sensors[17] = Sensor("IR C2AC4IR12", 42, "1044", true, INPUT_PULLUP,2000,0);
+  Sensors[13] = Sensor("IR C2AC3IR1", 2, "1043", true, INPUT_PULLUP, 2000, 0);
+  Sensors[14] = Sensor("IR C2AC2IR1", 44, "1042", true, INPUT_PULLUP, 2000, 0);
+  Sensors[15] = Sensor("IR C2AC1IR1", 45, "1041", true, INPUT_PULLUP, 2000, 0);
+  Sensors[16] = Sensor("IR CW Yard 5 Entry", 43, "1046", true, INPUT_PULLUP, 2000, 0);
+  Sensors[17] = Sensor("IR C2AC4IR12", 42, "1044", true, INPUT_PULLUP, 2000, 0);
 
   Sensors[18] = Sensor("CD UD-UL Yard Pi End", 41, "1030", false, INPUT_PULLUP);
   Sensors[19] = Sensor("CD UD-CW Yard Pi end", 40, "1031", false, INPUT_PULLUP);
   Sensors[20] = Sensor("CD Incline Pi End DTC", 39, "1032", false, INPUT_PULLUP);
   Sensors[21] = Sensor("CD UD-AC Yard Pi end", 38, "1033", false, INPUT_PULLUP);
   Sensors[22] = Sensor("CD UD-CW Yard", 35, "1034", false, INPUT_PULLUP);
-  
+
 
 
 
@@ -364,6 +384,13 @@ void InitialiseConfig() {
     String publishMessage = Sensors[i].State;
     String topic = Sensors[i].GetSensorPublishTopic();
   }
+
+  for (int i = 0; i < NumberOfRFIDReaders; i++) {
+    TagReaders[i].SoftSerial = SoftwareSerial(TagReaders[i].rxPin,TagReaders[i].txPin);
+    TagReaders[i].SoftSerial.begin(9600);
+  }
+
+
 
   Serial.println("Setup complete");
 }

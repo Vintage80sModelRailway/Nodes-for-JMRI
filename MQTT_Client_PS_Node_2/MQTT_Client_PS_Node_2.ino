@@ -7,11 +7,13 @@
 #include "Turnout.h"
 #include "Sensor.h"
 #include "ShiftRegister.h"
+#include "RFIDOutput.h"
 
 #define NumberOfPWMBoards 1
 #define NumberOfSensors 11
 //#define NumberOfShiftInRegisters 0
 #define NumberOfShiftOutRegisters 2
+#define NumberOfRFIDReaders 2
 #define OutputTurnoutThresholdID 2041
 
 // Update these with values suitable for your network.
@@ -28,6 +30,10 @@ PubSubClient client(ethClient);
 
 PWMBoard PWMBoards[NumberOfPWMBoards];
 Sensor Sensors[NumberOfSensors];
+RFIDOutput TagReaders[NumberOfRFIDReaders] = {
+  RFIDOutput(Serial1, "bayplatform"),
+  RFIDOutput(Serial2, "inclinebottom")
+};
 
 int numberOfServosMoving = 0;
 int servoSpeedMultipluer = 1;
@@ -62,13 +68,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setup()
 {
   Serial.begin(19200);
+  Serial1.begin(9600);
+  Serial2.begin(9600);
 
   client.setServer(server, 1883);
   client.setCallback(callback);
   pwm.setPWMFreq(50);  // Analog servos run at ~50 Hz updates
   pwm.begin();
   //pwm.setOscillatorFrequency(27000000);
- 
+
   Ethernet.init(53);
   //Ethernet.begin(mac, ip, gateway, subnet);
   Ethernet.begin(mac);
@@ -82,6 +90,7 @@ void setup()
   Serial.println("Finished connection");
   InitialiseConfig();
   inSetup = false;
+
 }
 
 void loop()
@@ -106,6 +115,18 @@ void loop()
       }
     }
   }
+
+  //RFID
+  
+  for (int r = 0; r < NumberOfRFIDReaders; r++) {
+    bool newTag = TagReaders[r].CheckForTag();
+    if (newTag) {
+      Serial.println("Found " + TagReaders[r].Name);
+      Serial.println(TagReaders[r].Tag);
+      String topic = "track/reporter/"+TagReaders[r].Name;
+      PublishToMQTT(topic, String(TagReaders[r].Tag),false);
+    }
+  }
   client.loop();
 }
 
@@ -126,14 +147,14 @@ void ProcessIncomingMessage(String message, String topic) {
         for (int pin = 0; pin < PWMBoards[board].numberOfTurnouts; pin++) {
           if (PWMBoards[board].turnouts[pin].jMRIId == justTheID) {
             if (PWMBoards[board].turnouts[pin].inSetup == true) {
-            //don't do loads of moving at startup
-            if (message == "CLOSED") {
-              PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].closedVal+1;
-            } else {
-              PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].thrownVal+1;
+              //don't do loads of moving at startup
+              if (message == "CLOSED") {
+                PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].closedVal + 1;
+              } else {
+                PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].thrownVal + 1;
+              }
+              PWMBoards[board].turnouts[pin].inSetup = false;
             }
-            PWMBoards[board].turnouts[pin].inSetup = false;
-          }
             PWMBoards[board].turnouts[pin].requiredState = message;
             Serial.println(justTheID + " - needs to go " + message);
             if (PWMBoards[board].turnouts[pin].useSlowMotion) {
@@ -143,13 +164,13 @@ void ProcessIncomingMessage(String message, String topic) {
                 PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].closedVal;
                 if (inSetup) {
                   PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].closedVal + 1;
-                  Serial.println("Setup closed "+justTheID+" "+String(PWMBoards[board].turnouts[pin].currentPWMVal));
+                  Serial.println("Setup closed " + justTheID + " " + String(PWMBoards[board].turnouts[pin].currentPWMVal));
                 }
               } else {
                 PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].thrownVal;
                 if (inSetup) {
                   PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].thrownVal - 1;
-                  Serial.println("Setup thrown "+justTheID+" "+String(PWMBoards[board].turnouts[pin].currentPWMVal));
+                  Serial.println("Setup thrown " + justTheID + " " + String(PWMBoards[board].turnouts[pin].currentPWMVal));
                 }
                 Serial.println("Required PWM VAL " + String(PWMBoards[board].turnouts[pin].requiredPWMVal));
                 Serial.println("Current PWM VAL " + String(PWMBoards[board].turnouts[pin].currentPWMVal));
@@ -195,7 +216,7 @@ void ProcessIncomingMessage(String message, String topic) {
   }
 }
 
-void PublishToMQTT(String topic, String message)  {
+void PublishToMQTT(String topic, String message, bool retain)  {
   byte topicBuffer[topic.length() + 1];
   byte messageBuffer[message.length() + 1];
 
@@ -203,7 +224,7 @@ void PublishToMQTT(String topic, String message)  {
   message.toCharArray(messageBuffer, message.length() + 1);
 
   Serial.println("Publish: " + topic + " - " + message);
-  client.publish(topicBuffer, messageBuffer, message.length(), true);
+  client.publish(topicBuffer, messageBuffer, message.length(), retain);
 }
 
 void MoveServoFast(int board, int pin, Turnout thisTurnout, String message) {
@@ -319,7 +340,7 @@ bool ProcessPointsMoveWithSpeedControl(int board, int pin)
       PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].requiredPWMVal;
       numberOfServosMoving--;
       if (PWMBoards[board].turnouts[pin].switchOff == true) {
-        Serial.println("Switching servo "+String(pin)+" board "+String(board)+" off");
+        Serial.println("Switching servo " + String(pin) + " board " + String(board) + " off");
         PWMBoards[board].pwm.setPWM(pin, 0, 0);
       }
       bool fullyOn = PWMBoards[board].turnouts[pin].currentState != "CLOSED";
@@ -370,44 +391,10 @@ void UpdateSensor(int i) {
     String publishMessage = Sensors[i].State;
     String topic = Sensors[i].GetSensorPublishTopic();
 
-    PublishToMQTT(topic, publishMessage);
+    PublishToMQTT(topic, publishMessage,true);
 
   }
 }
-
-//void ProcessShiftIn() {
-//  digitalWrite(load, LOW);
-//  digitalWrite(load, HIGH);
-//
-//  // Get data from 74HC165
-//  digitalWrite(clockIn, HIGH);
-//  digitalWrite(clockEnablePin, LOW);
-//  for (int i = 0; i < NumberOfShiftInRegisters; i++) {
-//    byte data = shiftIn(dataIn, clockIn, MSBFIRST);
-//    if (data != shiftInRegisters[i].PreviousValues) {
-//      UpdateShiftInputs(data, shiftInRegisters[i].PreviousValues, i);
-//      shiftInRegisters[i].PreviousValues = data;
-//    }
-//  }
-//  digitalWrite(clockEnablePin, HIGH);
-//  digitalWrite(load, LOW);
-//}
-
-//void UpdateShiftInputs(int data, int previousData, int shiftRegisterIndex) {
-//  int bits[8];
-//  int previousBits[8];
-//  for (int i = 0; i < 8; i++) {
-//    //bits[i] = (bool)((data >> (i % 8)) & 0x01);
-//    bits [i] = bitRead(data, i);
-//    previousBits[i] = bitRead(previousData, i);
-//    bool hasChanged = shiftInRegisters[shiftRegisterIndex].Sensors[i].UpdateShiftRegisterSensor(bits[i]);
-//    if (hasChanged) {
-//      String publishMessage = shiftInRegisters[shiftRegisterIndex].Sensors[i].State;
-//      String topic = shiftInRegisters[shiftRegisterIndex].Sensors[i].GetSensorPublishTopic();
-//      PublishToMQTT(topic, publishMessage);
-//    }
-//  }
-//}
 
 void ProcessShiftOut() {
   digitalWrite(latchPinOut, LOW);

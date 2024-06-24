@@ -6,12 +6,11 @@
 #include "PWMBoard.h"
 #include "Turnout.h"
 #include "Sensor.h"
-#include "RFIDInput.h"
-#include <SoftwareSerial.h>
+#include "RFIDOutput.h"
 
 #define NumberOfPWMBoards 1
 #define NumberOfSensors 23
-#define NumberOfRFIDReaders 2
+#define NumberOfRFIDReaders 3
 
 // Update these with values suitable for your network.
 byte mac[6] = { 0x90, 0xA2, 0xDA, 0x3A, 0xD4, 0x8D };
@@ -22,12 +21,10 @@ PubSubClient client(ethClient);
 
 PWMBoard PWMBoards[NumberOfPWMBoards];
 Sensor Sensors[NumberOfSensors];
-SoftwareSerial ss(11,5);
-
-RFIDInput TagReaders[NumberOfRFIDReaders] =
-{
-  RFIDInput("yardexitac", 10, 4),
-  RFIDInput("yardentrycw", 11, 5)
+RFIDOutput TagReaders[NumberOfRFIDReaders] = {
+  RFIDOutput(Serial1, "acyardexit"),
+  RFIDOutput(Serial2, "cwstationexit"),
+  RFIDOutput(Serial3, "ulstationapproach")
 };
 
 int numberOfServosMoving = 0;
@@ -45,14 +42,16 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setup()
 {
   Serial.begin(9600);
-  ss.begin(9600);
+  Serial1.begin(9600);
+  Serial2.begin(9600);
+  Serial3.begin(9600);
   client.setServer(server, 1883);
   client.setCallback(callback);
 
   Ethernet.init(53);
   Ethernet.begin(mac);
   // Allow the hardware to sort itself out
-  delay(1500);
+  delay(2000);
 
   if (!client.connected()) {
     reconnect();
@@ -82,30 +81,16 @@ void loop()
       }
     }
   }
-  if (ss.available()) {
-    while (ss.available()) {
-      char c = ss.read();
-      Serial.write(c);
-    }
-    Serial.println("Found in main main");
-  }
-  /*
   for (int r = 0; r < NumberOfRFIDReaders; r++) {
-    if (TagReaders[r].SoftSerial.available()) {
-      Serial.println("Found in main");
-    }
-    bool newTagFound = TagReaders[r].CheckForTag();
-    if (newTagFound) {
-      Serial.write(TagReaders[r].buffer, 64);
-      Serial.println();
-      Serial.println("New tag");
-      String topic = "track/reporter/" + TagReaders[r].Name;
-      byte topicBuffer[topic.length() + 1];
-      topic.toCharArray(topicBuffer, topic.length() + 1);
-      client.publish(topicBuffer, TagReaders[r].buffer, 64, false);
+    bool newTag = TagReaders[r].CheckForTag();
+    if (newTag) {
+      Serial.println("Found " + TagReaders[r].Name);
+      Serial.println(TagReaders[r].Tag);
+      String topic = "track/reporter/"+TagReaders[r].Name;
+      PublishToMQTT(topic, String(TagReaders[r].Tag),false);
     }
   }
-  */
+
   client.loop();
 }
 
@@ -158,7 +143,7 @@ void ProcessIncomingMessage(String message, String topic) {
   }
 }
 
-void PublishToMQTT(String topic, String message)  {
+void PublishToMQTT(String topic, String message, bool retain)  {
   byte topicBuffer[topic.length() + 1];
   byte messageBuffer[message.length() + 1];
 
@@ -166,7 +151,7 @@ void PublishToMQTT(String topic, String message)  {
   message.toCharArray(messageBuffer, message.length() + 1);
 
   Serial.println("Publish: " + topic + " - " + message);
-  client.publish(topicBuffer, messageBuffer, message.length(), true);
+  client.publish(topicBuffer, messageBuffer, message.length(), retain);
 }
 
 void MoveServoFast(int board, int pin, Turnout thisTurnout, String message) {
@@ -269,7 +254,7 @@ void UpdateSensor(int i) {
     String publishMessage = Sensors[i].State;
     String topic = Sensors[i].GetSensorPublishTopic();
 
-    PublishToMQTT(topic, publishMessage);
+    PublishToMQTT(topic, publishMessage,true);
 
   }
 }
@@ -385,10 +370,6 @@ void InitialiseConfig() {
     String topic = Sensors[i].GetSensorPublishTopic();
   }
 
-  for (int i = 0; i < NumberOfRFIDReaders; i++) {
-    TagReaders[i].SoftSerial = SoftwareSerial(TagReaders[i].rxPin,TagReaders[i].txPin);
-    TagReaders[i].SoftSerial.begin(9600);
-  }
 
 
 

@@ -2,8 +2,10 @@
 #include <Ethernet.h>
 #include <PubSubClient.h>
 #include "Sensor.h"
+#include "RFIDOutput.h"
 
 #define NumberOfSensors 16
+#define NumberOfRFIDReaders 2
 
 // Update these with values suitable for your network.
 byte mac[6] = { 0x90, 0xA2, 0xDA, 0x90, 0x68, 0xC5 };
@@ -13,6 +15,10 @@ EthernetClient ethClient;
 PubSubClient client(ethClient);
 
 Sensor Sensors[NumberOfSensors];
+RFIDOutput TagReaders[NumberOfRFIDReaders] = {
+  RFIDOutput(Serial1, "acstationexit"),
+  RFIDOutput(Serial2, "cwyardexit")
+};
 
 void callback(char* topic, byte* payload, unsigned int length) {
   String message = "";
@@ -25,6 +31,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setup()
 {
   Serial.begin(19200);
+  Serial1.begin(9600);
+  Serial2.begin(9600);
 
   client.setServer(server, 1883);
   client.setCallback(callback);
@@ -55,11 +63,21 @@ void loop()
     UpdateSensor(i);
   }
 
+  for (int r = 0; r < NumberOfRFIDReaders; r++) {
+    bool newTag = TagReaders[r].CheckForTag();
+    if (newTag) {
+      Serial.println("Found " + TagReaders[r].Name);
+      Serial.println(TagReaders[r].Tag);
+      String topic = "track/reporter/" + TagReaders[r].Name;
+      PublishToMQTT(topic, String(TagReaders[r].Tag), false);
+    }
+  }
+
   //ProcessShiftIn();
   client.loop();
 }
 
-void PublishToMQTT(String topic, String message)  {
+void PublishToMQTT(String topic, String message, bool retain)  {
   byte topicBuffer[topic.length() + 1];
   byte messageBuffer[message.length() + 1];
 
@@ -67,7 +85,7 @@ void PublishToMQTT(String topic, String message)  {
   message.toCharArray(messageBuffer, message.length() + 1);
 
   Serial.println("Publish: " + topic + " - " + message);
-  client.publish(topicBuffer, messageBuffer, message.length(), true);
+  client.publish(topicBuffer, messageBuffer, message.length(), retain);
 }
 
 void UpdateSensor(int i) {
@@ -77,7 +95,7 @@ void UpdateSensor(int i) {
     Serial.println("Checking sensor " + String(i) + " has changed");
     String publishMessage = Sensors[i].State;
     String topic = Sensors[i].GetSensorPublishTopic();
-    if (topic.length() > 0) PublishToMQTT(topic, publishMessage);
+    if (topic.length() > 0) PublishToMQTT(topic, publishMessage, true);
   }
 }
 
@@ -105,8 +123,8 @@ void InitialiseConfig() {
   Sensors[0] = Sensor("IR AC Yard Entry", 33, "3016", true, INPUT, 1000, 0);
   Sensors[1] = Sensor("zzCD CW Yard Bypass no longer used", 23, "3017", false, INPUT_PULLUP, 300, 2);
   //Sensors[13] = Sensor("zzCD AC Yard Bypass no longer used", 24, "3018", false,INPUT_PULLUP);
-  Sensors[2] = Sensor("CD PC End AC", 45, "3019", true, INPUT_PULLUP, 2000, 0,0);
-  Sensors[3] = Sensor("CD PC End CW", 41, "3020", true, INPUT_PULLUP, 300,2); //debounce to off only
+  Sensors[2] = Sensor("CD PC End AC", 45, "3019", true, INPUT_PULLUP, 2000, 0, 0);
+  Sensors[3] = Sensor("CD PC End CW", 41, "3020", true, INPUT_PULLUP, 2000, 0); //debounce to off only
   //Sensors[4] = Sensor("CD PC end incline", 34, "3021", true, INPUT_PULLUP, 1000, 0);
   Sensors[4] = Sensor("", -1, "");
   Sensors[5] = Sensor("IR CW Yard Exit", 31, "3022", true, INPUT, 300, 0);

@@ -2,3 +2,4 @@
 MQTT_Client_ESP_Corner2/arduino_secrets.h
 MQTT_Client_ESP_inclineTop/arduino_secrets.h
 ESP_Sensors_C2/arduino_secrets.h
+MQTT_Client_ESP_C1_Station/arduino_secrets.h

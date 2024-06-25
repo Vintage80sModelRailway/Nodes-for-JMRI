@@ -41,7 +41,7 @@ Electrofrog relay is controlled through the PCA9685 board as it had 8 connectors
 
 https://youtu.be/bpWt6p9PFpw?si=DcQliWyzrZVmNKaC
 
-2 RFID readers connected to Serial1, Serial2, Serial3 for identifying which train is in an active block
+2 RFID readers connected to Serial1, Serial2 for identifying which train is in an active block
 
 https://youtu.be/WULCDdYoGKw
 
@@ -67,7 +67,7 @@ Now just connected to sensors, block detectors.
 
 https://youtu.be/_Db5GG-U-4c?si=iM1FfPi6PhrIINgh
 
-2 RFID readers connected to Serial1, Serial2, Serial3 for identifying which train is in an active block
+2 RFID readers connected to Serial1, Serial2 for identifying which train is in an active block
 
 https://youtu.be/WULCDdYoGKw
 

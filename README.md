@@ -41,6 +41,10 @@ Electrofrog relay is controlled through the PCA9685 board as it had 8 connectors
 
 https://youtu.be/bpWt6p9PFpw?si=DcQliWyzrZVmNKaC
 
+2 RFID readers connected to Serial1, Serial2 for identifying which train is in an active block
+
+https://youtu.be/WULCDdYoGKw
+
 <h2>2 - MQTT_Client_PS_C1_minimised</h2>
 Arduino Mega R3
 
@@ -50,6 +54,10 @@ Sensor inputs for nearby block detectors
 
 https://youtu.be/_Db5GG-U-4c?si=iM1FfPi6PhrIINgh
 
+3 RFID readers connected to Serial1, Serial2, Serial3 for identifying which train is in an active block
+
+https://youtu.be/WULCDdYoGKw
+
 <h2>3 - MQTT_Client_PS_Node_3_minimised</h2>
 Arduino Mega R3
 
@@ -58,6 +66,10 @@ Used to overheat and cause all kinds of electronic devices so gradually had conn
 Now just connected to sensors, block detectors.
 
 https://youtu.be/_Db5GG-U-4c?si=iM1FfPi6PhrIINgh
+
+2 RFID readers connected to Serial1, Serial2 for identifying which train is in an active block
+
+https://youtu.be/WULCDdYoGKw
 
 <h2>4 - MQTT_Client_ESP_inclineTop</h2>
 ESP32
@@ -96,3 +108,7 @@ Intel Galileo Gen2
 The latest board to be set up, controlling the servos and relays for turnouts and electrofrog on the station exit on the upper deck.
 
 https://youtu.be/tPeac9mDtp8?si=ZxWgiHt2byoZG-_f
+
+<h2>8 - MQTT_Client_ESP_C1_Station</h2>
+ESP32
+Has a couple of LDRs connected for tracking occupancy of the short blocks (mostly double slips) around the station on the upper deck.

@@ -41,6 +41,9 @@ Electrofrog relay is controlled through the PCA9685 board as it had 8 connectors
 
 https://youtu.be/bpWt6p9PFpw?si=DcQliWyzrZVmNKaC
 
+Basic LED signals through shift out registers, responding to on / off messages from MQTT
+https://youtu.be/x6u-Y4YNqIA
+
 2 RFID readers connected to Serial1, Serial2 for identifying which train is in an active block
 
 https://youtu.be/WULCDdYoGKw

@@ -1,11 +1,17 @@
 #include "RFIDOutput.h"
 #include <Arduino.h>
 
+#define numberOfManufacturers 4
+
+const String rfidTagManufacturers[numberOfManufacturers] = {
+"0800", "6B00", "4300", "0500"
+};
+
 RFIDOutput::RFIDOutput(Stream &SerialPort, String SensorName)
   : ser(SerialPort)
   , Name(SensorName)
 {
-  ValidTagRead = false; 
+  ValidTagRead = false;
 }
 
 bool RFIDOutput::CheckForTag() {
@@ -21,6 +27,7 @@ bool RFIDOutput::CheckForTag() {
         //Serial.println("Start");
         _bytesRead = 0;
         checksum = 0;
+        ValidTagRead = false;
       }
       else if (val == 0x03 && _bytesRead == 12) {
         // ID completely read
@@ -39,18 +46,33 @@ bool RFIDOutput::CheckForTag() {
         if (checksum == chk) {
           ValidTagRead = true;
         }
+        else {
+          ValidTagRead = false;
+          Serial.println("Failed xs "+thisId);
+        }
+        bool manufacturerRecognised = false;
+        for (int m = 0; m < numberOfManufacturers; m++) {
+          if (rfidTagManufacturers[m] == thisId.substring(0, 4))
+            manufacturerRecognised = true;
+        }
+        if (!manufacturerRecognised) {
+          Serial.println("Mf not recognised " + thisId.substring(0, 4));
+          ValidTagRead = false;
+        }
       }
       else if (_bytesRead <= 12) {
         Tag[_bytesRead++] = val;
       }
 
       if (_bytesRead > 12) {
-        Serial.println("BR "+String(_bytesRead));
+        Serial.println("BR " + String(_bytesRead));
         return false;
       }
       if (val == 0x03) {
         //Serial.println("End char " + String(_bytesRead));
       }
+
+
     }
   }
   return ValidTagRead;

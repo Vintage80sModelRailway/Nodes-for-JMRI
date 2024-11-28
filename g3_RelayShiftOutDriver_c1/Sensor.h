@@ -7,20 +7,22 @@
 class Sensor {
   private:
     int _lastKnownValue;
-    int _pin;    
+    int _pin;
     String _name;
     bool _inverted;
     uint8_t _pinMode;
     int debounceMS;
 
-  public: 
+  public:
     String JMRIId;
     String State;
     bool publishRequired;
     bool inDebounce;
     unsigned long millisAtLastChange;
-    
-    Sensor(String SensorName = "", int InputPin = -1, String JMRIID = "", bool IsInverted = false, uint8_t PinMode = INPUT, int LastKnownValue = -1, int DebounceMS = 300);  
+    bool onHold;
+    unsigned long millisAtOnHold;
+
+    Sensor(String SensorName = "", int InputPin = -1, String JMRIID = "", bool IsInverted = false, uint8_t PinMode = INPUT, int LastKnownValue = -1, int DebounceMS = 300);
     bool UpdateSensor();
     void SetPinMode();
     String GetSensorPublishTopic();

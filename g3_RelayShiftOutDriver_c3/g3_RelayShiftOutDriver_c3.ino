@@ -70,9 +70,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
           if (PWMBoards[board].turnouts[pin].inSetup == true) {
             //don't do loads of moving at startup
             if (message == "CLOSED") {
-              PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].closedVal+1;
+              PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].closedVal + 1;
             } else {
-              PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].thrownVal+1;
+              PWMBoards[board].turnouts[pin].requiredPWMVal = PWMBoards[board].turnouts[pin].thrownVal + 1;
             }
             PWMBoards[board].turnouts[pin].inSetup = false;
           }
@@ -105,12 +105,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
       }
     }
 
-    if (foundRelayIndex >=0) {
-      Serial.println("Found matching local relay on pin "+String(relays[foundRelayIndex].pin));
+    if (foundRelayIndex >= 0) {
+      Serial.println("Found matching local relay on pin " + String(relays[foundRelayIndex].pin));
       int rVal = 0;
       if (message == "THROWN") rVal = 1;
       if (relays[foundRelayIndex].isInverted) rVal = !rVal;
-      digitalWrite(relays[foundRelayIndex].pin,rVal);
+      digitalWrite(relays[foundRelayIndex].pin, rVal);
       return; //no need to start searching through SRs, already found a match and dealt with it
     }
 
@@ -216,7 +216,7 @@ void setup()
 
   system("ifup enp0s20f6");
   delay(10000);
-
+  Serial.println("Before config");
   InitialiseConfig();
   pinMode(dataPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -228,7 +228,7 @@ void setup()
   pinMode(clockIn, OUTPUT);
   pinMode(dataIn, INPUT);
 
-
+  Serial.println("Before network");
   client.setServer(server, 1883);
   client.setCallback(callback);
   //Ethernet.begin(mac, ip, gateway, subnet);
@@ -328,7 +328,7 @@ bool ProcessPointsMoveWithSpeedControl(int board, int pin)
       PWMBoards[board].turnouts[pin].currentState = PWMBoards[board].turnouts[pin].requiredState;
       PWMBoards[board].turnouts[pin].currentPWMVal = PWMBoards[board].turnouts[pin].requiredPWMVal;
       if (PWMBoards[board].turnouts[pin].switchOff == true) {
-        Serial.println("Switching servo "+String(pin)+" board "+String(board)+" off");
+        Serial.println("Switching servo " + String(pin) + " board " + String(board) + " off");
         PWMBoards[board].pwm.setPWM(pin, 0, 0);
       }
     }
@@ -389,14 +389,14 @@ void ProcessShiftIn() {
 
 void InitialiseConfig() {
 
-  relays[0] = Output("3001",9,true);
-  relays[1] = Output("3002",10,true);
-  relays[2] = Output("3003",11,true);
-  relays[3] = Output("3004",12,true);
-  relays[4] = Output("3005",13,true);
-  relays[5] = Output("3006",15,false);
-  relays[6] = Output("3007",16,false);
-  relays[7] = Output("3008",17,true);
+  relays[0] = Output("3001", 9, true);
+  relays[1] = Output("3002", 10, true);
+  relays[2] = Output("3003", 11, true);
+  relays[3] = Output("3004", 12, true);
+  relays[4] = Output("3005", 13, true);
+  relays[5] = Output("3006", 15, false);
+  relays[6] = Output("3007", 16, false);
+  relays[7] = Output("3008", 17, true);
 
   for (int i = 0; i <= 7; i++) {
     pinMode(relays[i].pin, OUTPUT);
@@ -409,10 +409,10 @@ void InitialiseConfig() {
   shiftOutRegisters[0].Outputs[3] = Output("x5003", true); //Frog - DS Pi end LHS
   shiftOutRegisters[0].Outputs[4] = Output("x5007", true);
   shiftOutRegisters[0].Outputs[5] = Output("x5008", false);
-//  shiftOutRegisters[0].Outputs[6] = Output("", false);
-//  shiftOutRegisters[0].Outputs[7] = Output("", true);
+  //  shiftOutRegisters[0].Outputs[6] = Output("", false);
+  //  shiftOutRegisters[0].Outputs[7] = Output("", true);
 
-    //Signals corner 3
+  //Signals corner 3
   shiftOutRegisters[1].Outputs[0] = Output("3049");
   shiftOutRegisters[1].Outputs[1] = Output("3050");
   shiftOutRegisters[1].Outputs[2] = Output("3051");
@@ -420,7 +420,7 @@ void InitialiseConfig() {
   shiftOutRegisters[1].Outputs[4] = Output("3053");
   shiftOutRegisters[1].Outputs[5] = Output("3054");
 
-  //Signals under incline top 
+  //Signals under incline top
   shiftOutRegisters[2].Outputs[0] = Output("3041");
   shiftOutRegisters[2].Outputs[1] = Output("3042");
   shiftOutRegisters[2].Outputs[2] = Output("3043");
@@ -455,38 +455,42 @@ void InitialiseConfig() {
   shiftInRegisters[1].Sensors[2] = Sensor("IR C3C5IR2", -1, "3052", true);
   shiftInRegisters[1].Sensors[3] = Sensor("IR C2AC4IR3", -1, "3051", true);
   shiftInRegisters[1].Sensors[4] = Sensor("", -1, "", true);
-  shiftInRegisters[1].Sensors[5] = Sensor("IR C3C4IR2", -1, "3049", true);
+  //shiftInRegisters[1].Sensors[5] = Sensor("IR C3C4IR2", -1, "3049", true);
+  shiftInRegisters[1].Sensors[5] = Sensor("", -1, "");
   shiftInRegisters[1].Sensors[6] = Sensor("IR C3C2IR2", -1, "3055", true);
   shiftInRegisters[1].Sensors[7] = Sensor("IR C3C1IR2", -1, "3053", true);
 
   PWMBoards[0].pwm = Adafruit_PWMServoDriver(0x40);
   PWMBoards[0].numberOfTurnouts = 7;
-  PWMBoards[0].turnouts[0] = Turnout("5007", 1050, 2050, 2,3,true);
-  PWMBoards[0].turnouts[1] = Turnout("5001", 1550, 1100, 2,3,true);
-  PWMBoards[0].turnouts[2] = Turnout("5002", 1300, 1720, 2,3);
-  PWMBoards[0].turnouts[3] = Turnout("5003", 900, 1550, 2,3,true);
-  PWMBoards[0].turnouts[4] = Turnout("5004", 1100, 1700, 2,3,true);
-  PWMBoards[0].turnouts[5] = Turnout("5005", 2200, 1300, 2,3);
-  PWMBoards[0].turnouts[6] = Turnout("5006", 1900, 1300, 2,3);
-  
+  PWMBoards[0].turnouts[0] = Turnout("5007", 1100, 2000, 2, 3, true);
+  PWMBoards[0].turnouts[1] = Turnout("5001", 1700, 1100, 2, 3, true);
+  PWMBoards[0].turnouts[2] = Turnout("5002", 1300, 1720, 2, 3);
+  PWMBoards[0].turnouts[3] = Turnout("5003", 900, 1550, 2, 3, true);
+  PWMBoards[0].turnouts[4] = Turnout("5004", 1100, 1700, 2, 3, true);
+  PWMBoards[0].turnouts[5] = Turnout("5005", 2200, 1300, 2, 3);
+  PWMBoards[0].turnouts[6] = Turnout("5006", 1900, 1300, 2, 3);
+
   PWMBoards[0].pwm.begin();
   PWMBoards[0].pwm.setPWMFreq(50);  // This is the maximum PWM frequency
   PWMBoards[0].pwm.setOscillatorFrequency(25000000);
-
+  Serial.println("PWMq dibe");
   PWMBoards[1].pwm = Adafruit_PWMServoDriver(0x41);
-  PWMBoards[1].numberOfTurnouts = 10;
-  PWMBoards[1].turnouts[0] = Turnout("3001", 1700, 950, 2,3);
-  PWMBoards[1].turnouts[1] = Turnout("3002", 1900, 1100, 2,3);
-  PWMBoards[1].turnouts[2] = Turnout("3003", 1100, 1700, 2,3);
-  PWMBoards[1].turnouts[3] = Turnout("3004", 1100, 1900, 2,3);
-  PWMBoards[1].turnouts[4] = Turnout("3005", 1900, 1100, 2,3);
-  PWMBoards[1].turnouts[5] = Turnout("3006", 2050, 1300, 2,3);
-  PWMBoards[1].turnouts[6] = Turnout("3007", 1150, 2000, 2,3);
-  PWMBoards[1].turnouts[7] = Turnout("3008", 1600, 900, 2,3);
-  PWMBoards[1].turnouts[8] = Turnout("1006", 1100, 1850, 2,3);
-  PWMBoards[1].turnouts[9] = Turnout("6011", 1020, 1850, 2,3);
-  
-  
+  PWMBoards[1].numberOfTurnouts = 12;
+  PWMBoards[1].turnouts[0] = Turnout("3001", 1700, 950, 2, 3);
+  PWMBoards[1].turnouts[1] = Turnout("3002", 1900, 1100, 2, 3);
+  PWMBoards[1].turnouts[2] = Turnout("3003", 1100, 1700, 2, 3);
+  PWMBoards[1].turnouts[3] = Turnout("3004", 1100, 1900, 2, 3);
+  PWMBoards[1].turnouts[4] = Turnout("3005", 1900, 1100, 2, 3);
+  PWMBoards[1].turnouts[5] = Turnout("3006unplugged", 2050, 1300, 2, 3);
+  PWMBoards[1].turnouts[6] = Turnout("3007", 1150, 2000, 2, 3);
+  PWMBoards[1].turnouts[7] = Turnout("3008", 1600, 900, 2, 3);
+  PWMBoards[1].turnouts[8] = Turnout("1006", 1100, 1850, 2, 3);
+  PWMBoards[1].turnouts[9] = Turnout("6011", 1020, 1850, 2, 3);
+  PWMBoards[1].turnouts[10] = Turnout("xxempty", 1020, 1850, 2, 3);
+  PWMBoards[1].turnouts[11] = Turnout("3006", 2200, 1450, 2, 3);
+
+
+
   PWMBoards[1].pwm.begin();
   PWMBoards[1].pwm.setPWMFreq(50);  // This is the maximum PWM frequency
   PWMBoards[1].pwm.setOscillatorFrequency(25000000);

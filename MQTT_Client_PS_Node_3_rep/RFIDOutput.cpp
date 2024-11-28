@@ -1,26 +1,16 @@
 #include "RFIDOutput.h"
 #include <Arduino.h>
 
-#define numberOfManufacturers 4
-#define millisTimeoutBetweenSends 20000
-
-const String rfidTagManufacturers[numberOfManufacturers] = {
-  "0800", "6B00", "4300", "0500"
-};
-
 RFIDOutput::RFIDOutput(Stream &SerialPort, String SensorName)
   : ser(SerialPort)
   , Name(SensorName)
 {
-  ValidTagRead = false;
-  millisAtLastSend = millis();
-  lastId = "";
+  ValidTagRead = false; 
 }
 
 bool RFIDOutput::CheckForTag() {
   String thisId = "";
   ValidTagRead = false;
-  bool success = false;
   if (ser.available())
   {
     while (ser.available())
@@ -31,12 +21,10 @@ bool RFIDOutput::CheckForTag() {
         //Serial.println("Start");
         _bytesRead = 0;
         checksum = 0;
-        ValidTagRead = false;
       }
       else if (val == 0x03 && _bytesRead == 12) {
         // ID completely read
         thisId = Tag;
-        //Serial.println("ThisID "+thisId);
         mfr = hex2dec(thisId.substring(0, 4));
         id  = hex2dec(thisId.substring(4, 10));
         chk = hex2dec(thisId.substring(10, 12));
@@ -51,60 +39,21 @@ bool RFIDOutput::CheckForTag() {
         if (checksum == chk) {
           ValidTagRead = true;
         }
-        else {
-          ValidTagRead = false;
-          Serial.println("Failed xs " + thisId);
-        }
-        bool manufacturerRecognised = false;
-        for (int m = 0; m < numberOfManufacturers; m++) {
-          if (rfidTagManufacturers[m] == thisId.substring(0, 4))
-            manufacturerRecognised = true;
-        }
-        if (!manufacturerRecognised) {
-          Serial.println("Mf not recognised " + thisId.substring(0, 4));
-          ValidTagRead = false;
-        }
       }
       else if (_bytesRead <= 12) {
         Tag[_bytesRead++] = val;
       }
 
       if (_bytesRead > 12) {
-        Serial.println("BR " + String(_bytesRead));
+        Serial.println("BR "+String(_bytesRead));
         return false;
       }
       if (val == 0x03) {
         //Serial.println("End char " + String(_bytesRead));
       }
-
-
     }
   }
-
-  int millisSinceLastSend = millis() - millisAtLastSend;
-  if (ValidTagRead)
-  {
-    //Serial.println("Valid tag");
-    if (thisId != lastId)
-    {
-      //Serial.println("Different IDs - "+thisId+" - "+lastId);
-      success = true;
-      millisAtLastSend = millis();
-      lastId = thisId;
-    }
-    else
-    {
-      //Serial.println("Same IDs - "+thisId+" - "+lastId);
-      if (millisSinceLastSend > millisTimeoutBetweenSends) {
-        //Serial.println("Timeout OK");
-        success = true;
-        millisAtLastSend = millis();
-        lastId = thisId;
-      }
-    }  
-  } 
-
-  return success;
+  return ValidTagRead;
 }
 
 long RFIDOutput::hex2dec(String hexCode) {

@@ -15,7 +15,7 @@ class PWMBoard {
     int numberOfTurnouts;
     int CMRIIndexModifier;
     //List<Turnout> turnouts;
-    Turnout turnouts[11];
+    Turnout turnouts[12];
     Adafruit_PWMServoDriver pwm;  
 };
 

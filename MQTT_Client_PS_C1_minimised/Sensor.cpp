@@ -21,12 +21,20 @@ Sensor::Sensor(String SensorName, int InputPin, String JMRIID, bool IsInverted, 
     millisAtLastChange = millis();
   }
   else usingDebounce = false;
+  onHold = false;
+  millisAtOnHold = millis();
 }
 
 
 bool Sensor::UpdateSensor() {
   if (_pin == -1) return false;
   if (JMRIId == "") return false;
+
+  if (millis() - millisAtOnHold > 20000 && _lastKnownValue == 1 && onHold) {
+    //Serial.println("Timeout releasing hold for " + JMRIId);
+    onHold = false;
+  }
+  if (onHold && _lastKnownValue == 1) return false;
 
   bool hasChanged = false;
   int correctedVal = -1;
@@ -101,7 +109,7 @@ bool Sensor::UpdateSensor() {
 
   if (inDebounce) {
     if (correctedVal != debounceValue) {
-      Serial.println(JMRIId+ " flapping? debounce " + String(debounceValue) + " new " + String(correctedVal));
+      Serial.println(JMRIId + " flapping? debounce " + String(debounceValue) + " new " + String(correctedVal));
       inDebounce = false;
     }
   }

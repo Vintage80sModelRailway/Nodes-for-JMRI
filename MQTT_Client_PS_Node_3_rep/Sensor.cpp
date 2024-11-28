@@ -1,6 +1,10 @@
 #include "Sensor.h"
 #include <Arduino.h>
 
+
+
+
+
 Sensor::Sensor(String SensorName, int InputPin, String JMRIID, bool IsInverted, uint8_t PinMode, int DebounceMS, int DebounceMode, int LastKnownValue)
   : _name(SensorName)
   , _pin(InputPin)
@@ -17,19 +21,13 @@ Sensor::Sensor(String SensorName, int InputPin, String JMRIID, bool IsInverted, 
     millisAtLastChange = millis();
   }
   else usingDebounce = false;
-  onHold = false;
-  millisAtOnHold = millis();
 }
 
 
 bool Sensor::UpdateSensor() {
   if (_pin == -1) return false;
   if (JMRIId == "") return false;
-  if (millis() - millisAtOnHold > 20000 && onHold) {
-    Serial.println("Timeout releasing hold for " + JMRIId);
-    onHold = false;
-  }
-  if (onHold && _lastKnownValue == 1) return false;
+
   bool hasChanged = false;
   int correctedVal = -1;
   if (_inverted) {
@@ -37,13 +35,6 @@ bool Sensor::UpdateSensor() {
   }  else {
     correctedVal = digitalRead(_pin);
   }
-
-  //reset hold timeout if sensor has just gone inactive
-  if (correctedVal != _lastKnownValue && correctedVal == 0 && onHold) {
-    millisAtOnHold = millis();
-  }
-
-
 
   if (!usingDebounce) {
     if (correctedVal == _lastKnownValue) {
@@ -67,7 +58,7 @@ bool Sensor::UpdateSensor() {
   }
 
   if (!inDebounce) {
-    Serial.println("Into debounce for " + _name + " current " + String(_lastKnownValue) + " new " + String(correctedVal));
+    Serial.println("Into debounce for "+_name+" current " + String(_lastKnownValue) + " new " + String(correctedVal));
 
 
     switch (debounceMode) {
@@ -108,7 +99,7 @@ bool Sensor::UpdateSensor() {
   }
 
 
-  if (inDebounce && !bypassDebounce) {
+  if (inDebounce) {
     if (correctedVal != debounceValue) {
       Serial.println("Flapping? debounce " + String(debounceValue) + " new " + String(correctedVal));
       inDebounce = false;

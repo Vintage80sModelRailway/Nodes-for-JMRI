@@ -13,9 +13,6 @@ class RFIDOutput {
     long id;         // Tag ID (3 bytes)
     byte chk;        // Checksum (1 byte), only useful in UART Mode
     boolean valid;   // Validity of the Tag, based on the Checksum (UART Mode) or the parity bits (Wiegand Mode)
-    char lastTag[14];
-    String lastId;
-    unsigned long millisAtLastSend;
 
     long hex2dec(String hexCode);
 

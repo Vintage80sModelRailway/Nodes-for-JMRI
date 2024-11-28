@@ -7,7 +7,7 @@
 class Sensor {
   private:
     int _lastKnownValue;
-    int _pin;
+    int _pin;    
     String _name;
     bool _inverted;
     uint8_t _pinMode;
@@ -17,15 +17,13 @@ class Sensor {
     int debounceMode;
     //Mode - 0 to off only, 1 to on only, 2 both
 
-  public:
+  public: 
     String JMRIId;
     String State;
     bool inDebounce;
     unsigned long millisAtLastChange;
-    bool onHold;
-    unsigned long millisAtOnHold;
-
-    Sensor(String SensorName = "", int InputPin = -1, String JMRIID = "", bool IsInverted = false, uint8_t PinMode = INPUT, int DebounceMS = -1, int DebounceMode = -1, int LastKnownValue = -1);
+    
+    Sensor(String SensorName = "", int InputPin = -1, String JMRIID = "", bool IsInverted = false, uint8_t PinMode = INPUT, int DebounceMS = -1, int DebounceMode = -1, int LastKnownValue = -1);  
     bool UpdateSensor();
     bool UpdateSensorOld() ;
     void SetPinMode();

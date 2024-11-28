@@ -1,7 +1,7 @@
 #include "LDR.h"
 #include <Arduino.h>
 
-LDR::LDR(String SensorName, int InputPin, String JMRIID, int LightDarkThreshold, int DebounceMS, int DebounceMode)
+LDR::LDR(String SensorName, int InputPin, String JMRIID, int LightDarkThreshold, int DebounceOnMS, int DebounceOffMS)
   : sensorName(SensorName)
   , pin(InputPin)
   ,  JMRIId(JMRIID)
@@ -9,14 +9,21 @@ LDR::LDR(String SensorName, int InputPin, String JMRIID, int LightDarkThreshold,
 {
   lastKnownState = -1;
   testMode = false;
-  if (DebounceMS > -1 && DebounceMode > -1) {
-    usingDebounce = true;
-    debounceMS = DebounceMS;
-    debounceMode = DebounceMode;
-    Serial.println("Debounce activated on " + JMRIId);
+  if (DebounceOnMS > -1) {
+    usingOnDebounce = true;
+    debounceOnMS = DebounceOnMS;
+    Serial.println("Debounce on activated on " + JMRIId);
     millisAtLastChange = millis();
   }
-  else usingDebounce = false;
+  else usingOnDebounce = false;
+
+  if (DebounceOffMS > -1) {
+    usingOffDebounce = true;
+    debounceOffMS = DebounceOffMS;
+    Serial.println("Debounce off activated on " + JMRIId);
+    millisAtLastChange = millis();
+  }
+  else usingOffDebounce = false;
 }
 
 bool LDR::UpdateSensor() {
@@ -25,20 +32,17 @@ bool LDR::UpdateSensor() {
 
   bool hasChanged = false;
   int sensorVal = analogRead(pin);
-  int sensorState = 1;
+  int correctedVal = 1;
 
   if (sensorVal >= lightDarkThreshold)
-    sensorState = 0;
-//  if (JMRIId == "5021") {
-//    Serial.println("Val "+String(sensorVal)+" state "+String(sensorState));
-//  }
+    correctedVal = 0;
 
-  if (!usingDebounce) {
+  if (!usingOnDebounce && !usingOffDebounce) {
 
-    if (sensorState == lastKnownState) {
+    if (correctedVal == lastKnownState) {
       return false;
     }
-    if (sensorState == 0)
+    if (correctedVal == 0)
     {
       State = "INACTIVE";
     }
@@ -47,86 +51,54 @@ bool LDR::UpdateSensor() {
       State = "ACTIVE";
     }
 
-    lastKnownState = sensorState;
-    Serial.println("Val "+String(sensorVal)+" state "+String(sensorState));
+    lastKnownState = correctedVal;
+
     return true;
   }
   bool bypassDebounce = false;
 
-  if (!inDebounce && lastKnownState == sensorState)
+  if (!inDebounce && lastKnownState == correctedVal)
   {
     return false;
   }
 
-  if (!inDebounce) {
-    //Serial.println("Into debounce current " + String(lastKnownState) + " new " + String(sensorState));
-
-    switch (debounceMode) {
-      case 0: //to off only - we get here when debounce is on and pin reading has changed
-        if (sensorState == false) {
-          //sensor has gone to DARK - handle debounce
-          millisAtLastChange = millis();
-          inDebounce = true;
-          debounceValue = sensorState;
-          //Serial.println("In debounce for off only - " + JMRIId);
-        } else {
-          bypassDebounce = true; //Bypass debounce if we're on off only and the value has switched to 1
-          //Serial.println("Bypassing for " + JMRIId + " corrected val " + String(sensorState) + " debounce val " + String(debounceValue));
-        }
-        break;
-      case 1:
-        if (sensorState == 1) {
-          //sensor has gone to High - handle debounce
-          millisAtLastChange = millis();
-          inDebounce = true;
-          debounceValue = sensorState;
-          //Serial.println("In debounce for on only - " + JMRIId);
-        } else {
-          bypassDebounce = true;
-        }
-        break;
-      case 2:
-        //sensor has changed handle debounce
-        millisAtLastChange = millis();
-        inDebounce = true;
-        debounceValue = sensorState;
-        //Serial.println("In debounce for both - " + JMRIId);
-        break;
-      default:
-        Serial.println("Unhandled debounce setting for " + JMRIId);
-        break;
-    }
+  if (!inDebounce && (usingOffDebounce || usingOnDebounce)) {
+    //Serial.println("Into debounce current " + String(lastKnownState) + " new " + String(correctedVal));
+    //sensor has gone to off - handle debounce
+    millisAtLastChange = millis();
+    inDebounce = true;
+    debounceValue = correctedVal;
+    //Serial.println("In debounce - " + JMRIId);
   }
-
 
   if (inDebounce) {
-    if (sensorState != debounceValue) {
-      //Serial.println("Flapping ? debounce " + String(debounceValue) + " new " + String(sensorState));
+    unsigned long millisSinceLastChange = (millis() - millisAtLastChange);
+    if (correctedVal != debounceValue) {
+      //Serial.println("Flapping ? debounce " + String(debounceValue) + "("+String(sensorVal) + ") new " + String(correctedVal)+ " - T - "+String(lightDarkThreshold));
       inDebounce = false;
     }
-  }
-  unsigned long millisSinceLastChange = (millis() - millisAtLastChange);
-
-  if ((inDebounce && millisSinceLastChange >= debounceMS) || bypassDebounce) {
-    if (lastKnownState != sensorState) {
-      Serial.println("Safe to change now "+String(sensorVal));
-      analogVal = sensorVal;
-      lastKnownState = sensorState;
-      inDebounce = false;
-      if (sensorState == 0)
-        State = "INACTIVE";
-      else
-        State = "ACTIVE";
-      return true;
-    }
-
     else {
-      inDebounce = false;
-      return false;
+      if ((correctedVal ==  true && debounceValue == true && millisSinceLastChange >= debounceOnMS)
+          || (correctedVal == false && debounceValue == false && millisSinceLastChange >= debounceOffMS) ) {
+        if (lastKnownState != correctedVal) {
+          Serial.println("Safe to change now " + String(correctedVal) + " - debounce millis - " + String(millisSinceLastChange));
+          lastKnownState = correctedVal;
+          inDebounce = false;
+          analogVal = sensorVal;
+          if (correctedVal == 0)
+            State = "INACTIVE";
+          else
+            State = "ACTIVE";
+          return true;
+        }
+
+        else {
+          inDebounce = false;
+          return false;
+        }
+      }
     }
   }
-
-
   return false;
 }
 

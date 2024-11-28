@@ -7,7 +7,7 @@
 #include "Turnout.h"
 #include "Sensor.h"
 
-#define NumberOfShiftOutRegisters 2
+#define NumberOfShiftOutRegisters 0
 #define NumberOfShiftInRegisters 0
 #define NumberOfPWMBoards 1
 #define NumberOfSensors 4
@@ -37,7 +37,7 @@ IPAddress server(192, 168, 1, 29);
 EthernetClient ethClient;
 PubSubClient client(ethClient);
 
-ShiftRegister shiftOutRegisters[NumberOfShiftOutRegisters];
+//ShiftRegister shiftOutRegisters[NumberOfShiftOutRegisters];
 ShiftRegister shiftInRegisters[NumberOfShiftInRegisters];
 Sensor Sensors[NumberOfSensors];
 
@@ -98,7 +98,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
         }
       }
     }
-
+    /*
     Serial.println("Looking in SRs for " + justTheID);
     int foundRegisterIndex = -1;
     int foundPinIndex = -1;
@@ -124,6 +124,27 @@ void callback(char* topic, byte* payload, unsigned int length) {
       Serial.println(String(pv));
       shiftOutRegisters[foundRegisterIndex].PreviousValues = pv;
       ProcessShiftOut();
+    }
+    */
+  }
+  
+  else if (pos >= 0 && strTopic.indexOf("sensorhold") >= 0) {
+    String justTheID = strTopic.substring(pos + 1);
+    //Serial.println("Just the ID " + justTheID);
+    for (int i = 0; i < NumberOfSensors; i++) {
+      if (Sensors[i].JMRIId == justTheID) {
+        //Serial.println("Sensor found");
+        if (message == "1") {
+          Sensors[i].onHold = true;
+          Sensors[i].millisAtOnHold = millis();
+          Serial.println(justTheID + " on hold");
+        }
+        else {
+          Sensors[i].onHold = false;
+          Serial.println(justTheID + " hold released");
+          Sensors[i].millisAtOnHold = millis();
+        }
+      }
     }
   }
 }
@@ -160,6 +181,17 @@ void reconnect() {
       client.subscribe("track/turnout/6009");
       client.subscribe("track/turnout/6010");
       client.subscribe("track/turnout/6011"); // frog only
+
+      for (int i = 0; i < NumberOfSensors; i++) {
+        String jmriId = Sensors[i].JMRIId;
+        String sub = "layout/sensorhold/" + jmriId;
+        int str_len = sub.length() + 1;
+        char char_array[str_len];
+
+        Serial.println("Sub " + sub);
+        sub.toCharArray(char_array, str_len);
+        client.subscribe(char_array);
+      }
 
     } else {
       Serial.print("failed, rc=");
@@ -302,6 +334,7 @@ bool ProcessPointsMoveWithSpeedControl(int board, int pin)
   return moveIsComplete;
 }
 
+/*
 void ProcessShiftOut() {
   digitalWrite(latchPin, LOW);
 
@@ -313,7 +346,7 @@ void ProcessShiftOut() {
 
   digitalWrite(latchPin, HIGH);
 }
-
+*/
 void ProcessShiftIn() {
   // Write pulse to load pin
   digitalWrite(load, LOW);
@@ -365,6 +398,7 @@ void UpdateSensor(int i) {
 void InitialiseConfig() {
 
   //4 relay board - furthest away so first to be pushed
+  /*
   shiftOutRegisters[0].Outputs[0] = Output("6009", false);//Frog - DS PC End RHS
   shiftOutRegisters[0].Outputs[1] = Output("6010", true); //Frog - DS Pi end RHS
   shiftOutRegisters[0].Outputs[2] = Output("6011", true); //Frog - DS PC end LHS
@@ -388,7 +422,7 @@ void InitialiseConfig() {
   //Shift in registers
   //shiftInRegisters[0].Sensors[0] = Sensor("IR C2AC2IR3", -1, "3047", true);
 
-
+*/
   PWMBoards[0].pwm = Adafruit_PWMServoDriver(0x40);
   PWMBoards[0].numberOfTurnouts = 10;
   PWMBoards[0].turnouts[0] = Turnout("6001", 1300, 2100, 1, 5); //station xover access line over hatch

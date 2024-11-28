@@ -22,6 +22,8 @@ class Sensor {
     String State;
     bool inDebounce;
     unsigned long millisAtLastChange;
+    bool onHold;
+    unsigned long millisAtOnHold;
     
     Sensor(String SensorName = "", int InputPin = -1, String JMRIID = "", bool IsInverted = false, uint8_t PinMode = INPUT, int DebounceMS = -1, int DebounceMode = -1, int LastKnownValue = -1);  
     bool UpdateSensor();

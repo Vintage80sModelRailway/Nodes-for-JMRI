@@ -3,14 +3,15 @@
 #include <PubSubClient.h>
 #include <Adafruit_PWMServoDriver.h>
 #include <Wire.h>
+#include <SoftwareSerial.h>
 #include "PWMBoard.h"
 #include "Turnout.h"
 #include "Sensor.h"
 #include "RFIDOutput.h"
 
 #define NumberOfPWMBoards 1
-#define NumberOfSensors 23
-#define NumberOfRFIDReaders 3
+#define NumberOfSensors 25
+#define NumberOfRFIDReaders 4
 
 // Update these with values suitable for your network.
 byte mac[6] = { 0x90, 0xA2, 0xDA, 0x3A, 0xD4, 0x8D };
@@ -19,12 +20,15 @@ IPAddress server(192, 168, 1, 29);
 EthernetClient ethClient;
 PubSubClient client(ethClient);
 
+SoftwareSerial ssBranchPlatform(10, 2);
+
 PWMBoard PWMBoards[NumberOfPWMBoards];
 Sensor Sensors[NumberOfSensors];
 RFIDOutput TagReaders[NumberOfRFIDReaders] = {
   RFIDOutput(Serial1, "acyardexit"),
   RFIDOutput(Serial2, "cwstationexit"),
-  RFIDOutput(Serial3, "ulstationapproach")
+  RFIDOutput(Serial3, "ulstationapproach"),
+  RFIDOutput(ssBranchPlatform, "branchplatform")
 };
 
 int numberOfServosMoving = 0;
@@ -41,10 +45,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void setup()
 {
+  delay(10000);
   Serial.begin(9600);
   Serial1.begin(9600);
   Serial2.begin(9600);
   Serial3.begin(9600);
+  ssBranchPlatform.begin(9600);
   client.setServer(server, 1883);
   client.setCallback(callback);
 
@@ -53,11 +59,13 @@ void setup()
   // Allow the hardware to sort itself out
   delay(2000);
 
+  InitialiseConfig();
+
   if (!client.connected()) {
     reconnect();
   }
   Serial.println("Past initial connection");
-  InitialiseConfig();
+
 }
 
 void loop()
@@ -86,8 +94,8 @@ void loop()
     if (newTag) {
       Serial.println("Found " + TagReaders[r].Name);
       Serial.println(TagReaders[r].Tag);
-      String topic = "track/reporter/"+TagReaders[r].Name;
-      PublishToMQTT(topic, String(TagReaders[r].Tag),false);
+      String topic = "track/reporter/" + TagReaders[r].Name;
+      PublishToMQTT(topic, String(TagReaders[r].Tag), false);
     }
   }
 
@@ -137,6 +145,25 @@ void ProcessIncomingMessage(String message, String topic) {
             MoveServoFast(board, pin, PWMBoards[board].turnouts[pin], message);
           }
           break;
+        }
+      }
+    }
+  }
+  else if (pos >= 0 && strTopic.indexOf("sensorhold") >= 0) {
+    String justTheID = strTopic.substring(pos + 1);
+    //Serial.println("Just the ID " + justTheID);
+    for (int i = 0; i < NumberOfSensors; i++) {
+      if (Sensors[i].JMRIId == justTheID) {
+        //Serial.println("Sensor found");
+        if (message == "1") {
+          Sensors[i].onHold = true;
+          Sensors[i].millisAtOnHold = millis();
+          Serial.println(justTheID + " on hold");
+        }
+        else {
+          Sensors[i].onHold = false;
+          Serial.println(justTheID + " hold released");
+          Sensors[i].millisAtOnHold = millis();
         }
       }
     }
@@ -254,7 +281,7 @@ void UpdateSensor(int i) {
     String publishMessage = Sensors[i].State;
     String topic = Sensors[i].GetSensorPublishTopic();
 
-    PublishToMQTT(topic, publishMessage,true);
+    PublishToMQTT(topic, publishMessage, true);
 
   }
 }
@@ -290,6 +317,17 @@ void reconnect() {
       client.subscribe("track/turnout/1018");
       client.subscribe("track/turnout/1005");
       client.subscribe("track/turnout/5008");
+
+      for (int i = 0; i < NumberOfSensors; i++) {
+        String jmriId = Sensors[i].JMRIId;
+        String sub = "layout/sensorhold/" + jmriId;
+        int str_len = sub.length() + 1;
+        char char_array[str_len];
+
+        Serial.println("Sub " + sub);
+        sub.toCharArray(char_array, str_len);
+        client.subscribe(char_array);
+      }
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -340,24 +378,27 @@ void InitialiseConfig() {
   Sensors[4] = Sensor("IR CW Yard entry lower", 27, "1021", true, INPUT, 800, 0);
   Sensors[5] = Sensor("IR AC Yard Exit", 26, "1022", true, INPUT, 800, 0);
   Sensors[6] = Sensor("IR AC Yard Bypass stopping sensor", 36, "1023", true, INPUT, 800, 0);
-  Sensors[7] = Sensor("CD AC Yard bypass Pi End", 25, "1024", false, INPUT_PULLUP);
-  Sensors[8] = Sensor("CD CW Yard bypass Pi end", 24, "1025", false, INPUT_PULLUP);
-  Sensors[9] = Sensor("CD Incline Top", 22, "1026", false, INPUT_PULLUP);
-  Sensors[10] = Sensor("CD corner 2 unused 1", 23, "1027", false, INPUT_PULLUP);
+  Sensors[7] = Sensor("CD AC Yard bypass Pi End", 25, "1024", true, INPUT_PULLUP);
+  Sensors[8] = Sensor("CD CW Yard bypass Pi end", 24, "1025", true, INPUT_PULLUP);
+  Sensors[9] = Sensor("CD Incline Top", 22, "1026", true, INPUT_PULLUP);
+  Sensors[10] = Sensor("CD corner 2 unused 1", 23, "1027", true, INPUT_PULLUP);
   Sensors[11] = Sensor("CD Incline station 1", 47, "1028", true, INPUT_PULLUP, 2000, 0);
   Sensors[12] = Sensor("CD Incline station 2", 46, "1029", true, INPUT_PULLUP, 2000, 0);
 
-  Sensors[13] = Sensor("IR C2AC3IR1", 2, "1043", true, INPUT_PULLUP, 2000, 0);
-  Sensors[14] = Sensor("IR C2AC2IR1", 44, "1042", true, INPUT_PULLUP, 2000, 0);
-  Sensors[15] = Sensor("IR C2AC1IR1", 45, "1041", true, INPUT_PULLUP, 2000, 0);
-  Sensors[16] = Sensor("IR CW Yard 5 Entry", 43, "1046", true, INPUT_PULLUP, 2000, 0);
-  Sensors[17] = Sensor("IR C2AC4IR12", 42, "1044", true, INPUT_PULLUP, 2000, 0);
+  Sensors[13] = Sensor("IR C2AC3IR1", 3, "1043", true, INPUT, 2000, 0);
+  Sensors[14] = Sensor("IR C2AC2IR1", 44, "1042", true, INPUT, 2000, 0);
+  Sensors[15] = Sensor("IR C2AC1IR1", 45, "1041", true, INPUT, 2000, 0);
+  Sensors[16] = Sensor("IR CW Yard 5 Entry", 43, "1046", true, INPUT, 2000, 0);
+  Sensors[17] = Sensor("IR C2AC4IR12", 42, "1044", true, INPUT, 2000, 0);
 
-  Sensors[18] = Sensor("CD UD-UL Yard Pi End", 41, "1030", false, INPUT_PULLUP);
-  Sensors[19] = Sensor("CD UD-CW Yard Pi end", 40, "1031", false, INPUT_PULLUP);
-  Sensors[20] = Sensor("CD Incline Pi End DTC", 39, "1032", false, INPUT_PULLUP);
-  Sensors[21] = Sensor("CD UD-AC Yard Pi end", 38, "1033", false, INPUT_PULLUP);
-  Sensors[22] = Sensor("CD UD-CW Yard", 35, "1034", false, INPUT_PULLUP);
+  Sensors[18] = Sensor("CD UD-UL Yard Pi End", 41, "1030", true, INPUT_PULLUP);
+  Sensors[19] = Sensor("CD UD-CW Yard Pi end", 40, "1031", true, INPUT_PULLUP);
+  Sensors[20] = Sensor("CD Incline Pi End DTC", 39, "1032", true, INPUT_PULLUP);
+  Sensors[21] = Sensor("CD UD-AC Yard Pi end", 38, "1033", true, INPUT_PULLUP);
+
+  Sensors[22] = Sensor("CD CW Station DS", 4, "1100", true, INPUT_PULLUP);
+  Sensors[23] = Sensor("CD CW Station Approach DS", 5, "1101", true, INPUT_PULLUP);
+  Sensors[24] = Sensor("IR CW Yard Bypass Pi End", 6, "1102", false, INPUT, 800, 0);
 
 
 

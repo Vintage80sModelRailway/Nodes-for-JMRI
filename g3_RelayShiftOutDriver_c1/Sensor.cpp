@@ -12,13 +12,22 @@ Sensor::Sensor(String SensorName, int InputPin, String JMRIID, bool IsInverted, 
   ,   millisAtLastChange(0)
   ,   debounceMS(DebounceMS)
 {
-
+  
+  onHold = false;
+  //millisAtOnHold = millis();
+  
 }
 
 bool Sensor::UpdateSensor() {
   if (_pin == -1) return false;
   if (JMRIId == "") return false;
-
+  
+  if (millis() - millisAtOnHold > 20000 && _lastKnownValue == 1 && onHold) {
+    //Serial.println("Timeout releasing hold for " + JMRIId);
+    onHold = false;
+  }
+  if (onHold && _lastKnownValue == 1) return false;
+  
   int val = -1;
   if (_inverted) {
     val = !digitalRead(_pin);

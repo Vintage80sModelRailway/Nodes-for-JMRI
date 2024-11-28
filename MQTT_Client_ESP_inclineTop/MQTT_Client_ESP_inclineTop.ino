@@ -43,7 +43,7 @@ void connect() {
   client.subscribe("track/turnout/5005");
   client.subscribe("track/turnout/5006");
   client.subscribe("track/turnout/5007");
-  client.subscribe("track/turnout/5008");
+  //client.subscribe("track/turnout/5008");
 }
 
 void setup()
@@ -191,7 +191,7 @@ void InitialiseConfig() {
   relays[2] = Output("5005",21,true);
   relays[3] = Output("5003",16,true); //bottom one after swap
   relays[4] = Output("5007",18,true);
-  relays[5] = Output("5008",5,false);
+  //relays[5] = Output("5008",5,false);
   //relays[6] = Output("xx",16,false);
   //relays[7] = Output("xx",19,true); -- 19 might be dodgy
 

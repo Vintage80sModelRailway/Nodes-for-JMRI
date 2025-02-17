@@ -171,14 +171,14 @@ void reconnect() {
 void InitialiseConfig() {
 
   //Sensors - Name, Pin, JMRIId, IsInverted = false, Pinmode = INPUT, Lastknownvalue = 0
-  Sensors[0] = Sensor("IR AC Yard Entry", 33, "3016", true, INPUT, 1000, 0);
-  Sensors[1] = Sensor("zzCD CW Yard Bypass no longer used", 23, "3017", false, INPUT_PULLUP, 300, 2);
+  Sensors[0] = Sensor("IR AC Yard Entry", 33, "3016", true, INPUT, 100, 1000);
+  Sensors[1] = Sensor("zzCD CW Yard Bypass no longer used", 23, "3017", false, INPUT_PULLUP, 300, 200);
   //Sensors[13] = Sensor("zzCD AC Yard Bypass no longer used", 24, "3018", false,INPUT_PULLUP);
-  Sensors[2] = Sensor("CD PC End AC", 45, "3019", true, INPUT_PULLUP, 2000, 0, 0);
-  Sensors[3] = Sensor("CD PC End CW", 42, "3020", true, INPUT_PULLUP, 2000, 0); //debounce to off only
+  Sensors[2] = Sensor("CD PC End AC", 45, "3019", true, INPUT_PULLUP, 20, 2000);
+  Sensors[3] = Sensor("CD PC End CW", 42, "3020", true, INPUT_PULLUP, 20, 2000);
   //Sensors[4] = Sensor("CD PC end incline", 34, "3021", true, INPUT_PULLUP, 1000, 0);
-  Sensors[4] = Sensor("IR C3C4IR2", 7, "3049", true, INPUT, 300, 0);
-  Sensors[5] = Sensor("IR CW Yard Exit", 31, "3022", true, INPUT, 300, 0);
+  Sensors[4] = Sensor("IR C3C4IR2", 7, "3049", true, INPUT, 100, 300);
+  Sensors[5] = Sensor("IR CW Yard Exit", 31, "3022", true, INPUT, 100, 300);
   Sensors[6] = Sensor("CD AC Yard bypass PC End", 29, "3023", true, INPUT_PULLUP);
   Sensors[7] = Sensor("CD CW Yard bypass PC End", 30, "3024", true, INPUT_PULLUP);
   Sensors[8] = Sensor("CD UD-UL PC End", 37, "3027", true, INPUT_PULLUP);
@@ -189,9 +189,9 @@ void InitialiseConfig() {
   Sensors[13] = Sensor("CD UD-CW Yard PC End", 34, "3032", true, INPUT_PULLUP);
   Sensors[14] = Sensor("CD UD-AC Yard side", 41, "3033", true, INPUT_PULLUP);
   Sensors[15] = Sensor("CD UD-UL Yard side", 40, "3034", true, INPUT_PULLUP);
-  Sensors[16] = Sensor("CD UD-CW Yard", 28, "1034", true, INPUT_PULLUP, 2000, 0);
+  Sensors[16] = Sensor("CD UD-CW Yard", 28, "1034", true, INPUT_PULLUP, 100, 2000);
   //Sensors[8] = Sensor("IR AC PC End Stopping sensor", 31, "3025", false);
-  Sensors[17] = Sensor("IR CW Yard Bypass PC End", 8, "3035", false, INPUT, 1000, 0);
+  Sensors[17] = Sensor("IR CW Yard Bypass PC End", 8, "3035", false, INPUT, 100, 300);
 
   for (int i = 0; i < NumberOfSensors; i++) {
     Sensors[i].SetPinMode();

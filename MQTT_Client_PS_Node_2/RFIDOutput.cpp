@@ -81,25 +81,28 @@ bool RFIDOutput::CheckForTag() {
     }
   }
 
-  int millisSinceLastSend = millis() - millisAtLastSend;
+  unsigned long millisSinceLastSend = millis() - millisAtLastSend;
   if (ValidTagRead)
   {
-    //Serial.println("Valid tag");
+    Serial.println("Valid tag");
     if (thisId != lastId)
     {
-      //Serial.println("Different IDs - "+thisId+" - "+lastId);
+      Serial.println("Different IDs - "+thisId+" - "+lastId);
       success = true;
       millisAtLastSend = millis();
       lastId = thisId;
     }
     else
     {
-      //Serial.println("Same IDs - "+thisId+" - "+lastId);
+      Serial.println("Same IDs - "+thisId+" - "+lastId);
       if (millisSinceLastSend > millisTimeoutBetweenSends) {
-        //Serial.println("Timeout OK");
+        Serial.println("Timeout OK "+String(millisSinceLastSend));
         success = true;
         millisAtLastSend = millis();
         lastId = thisId;
+      }
+      else {
+        Serial.println("Timeout not hit "+String(millisSinceLastSend));
       }
     }  
   } 

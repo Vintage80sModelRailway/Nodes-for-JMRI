@@ -4,7 +4,8 @@
 #include "arduino_secrets.h"
 #include "Output.h"
 
-#define NumberOfLDRs 4
+#define NumberOfLDRs 5
+#define NumberOfRelays 11
 
 const char* ssid     = SECRET_SSID;
 const char* password = SECRET_PASS;
@@ -16,7 +17,7 @@ const char * server = "192.168.1.29";
 
 WiFiClient wifiClient;
 MQTTClient client;
-Output relays[8];
+Output relays[NumberOfRelays];
 bool inSetup = true;
 
 LDR LDRs[NumberOfLDRs];
@@ -122,7 +123,7 @@ void messageReceived(String &topic, String &payload) {
 
     Serial.println("Looking in relays for " + justTheID);
     int foundRelayIndex = -1;
-    for (int r = 0; r < 6; r++) {
+    for (int r = 0; r < NumberOfRelays; r++) {
       if (relays[r].JMRIId == justTheID) {
         foundRelayIndex = r;
         break;
@@ -172,6 +173,7 @@ void InitialiseConfig() {
   LDRs[1] = LDR("LDR Station AC Entry", 35, "6011", 1800, 100, 2000);
   LDRs[2] = LDR("LDR Station XO", 39, "6012", 1800, 100, 2000);
   LDRs[3] = LDR("LDR Station Bay", 32, "6013", 3000, 100, 500);
+  LDRs[4] = LDR("LDR UL Platform End", 33, "6014", 1500, 100, 2000);
 
 
   relays[0] = Output("6001", 23, true);
@@ -187,7 +189,7 @@ void InitialiseConfig() {
   relays[10] = Output("6011", 2, true);
   //relays[11] = Output("xx6012", 15, true);
 
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < NumberOfRelays; i++) {
     pinMode(relays[i].pin, OUTPUT);
     Serial.println("Setup complete " + String(i));
   }
